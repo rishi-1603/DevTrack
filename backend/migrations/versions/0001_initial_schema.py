@@ -31,7 +31,6 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_users_email", "users", ["email"], unique=True)
-    op.create_index("ix_users_id", "users", ["id"])
 
     op.create_table(
         "projects",
@@ -42,7 +41,6 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_projects_title", "projects", ["title"])
-    op.create_index("ix_projects_id", "projects", ["id"])
 
     op.create_table(
         "issues",
@@ -57,7 +55,6 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_issues_title", "issues", ["title"])
-    op.create_index("ix_issues_id", "issues", ["id"])
 
     op.create_table(
         "comments",
@@ -67,8 +64,6 @@ def upgrade() -> None:
         sa.Column("comment", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
-    op.create_index("ix_comments_id", "comments", ["id"])
-
     op.create_table(
         "activity_logs",
         sa.Column("id", sa.Integer(), primary_key=True, index=True),
@@ -76,8 +71,6 @@ def upgrade() -> None:
         sa.Column("action", sa.String(length=255), nullable=False),
         sa.Column("timestamp", sa.DateTime(timezone=True), nullable=False),
     )
-    op.create_index("ix_activity_logs_id", "activity_logs", ["id"])
-
 
 def downgrade() -> None:
     op.drop_table("activity_logs")
