@@ -36,7 +36,11 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.DEVELOPER, nullable=False)
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=UserRole.DEVELOPER,
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     owned_projects: Mapped[list["Project"]] = relationship(
@@ -75,9 +79,15 @@ class Issue(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     priority: Mapped[IssuePriority] = mapped_column(
-        Enum(IssuePriority), default=IssuePriority.MEDIUM, nullable=False
+        Enum(IssuePriority, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=IssuePriority.MEDIUM,
+        nullable=False,
     )
-    status: Mapped[IssueStatus] = mapped_column(Enum(IssueStatus), default=IssueStatus.TODO, nullable=False)
+    status: Mapped[IssueStatus] = mapped_column(
+        Enum(IssueStatus, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=IssueStatus.TODO,
+        nullable=False,
+    )
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     assigned_to: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
