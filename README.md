@@ -206,3 +206,22 @@ user, non-author deleting a comment).
 - CSV export of projects and issues
 - A per-issue activity timeline (currently activity is logged globally per user,
   not yet surfaced per-issue in the API)
+
+## Live Demo
+
+A live instance is deployed on Render:
+
+- **Interactive API docs (Swagger UI):** https://devtrack-api-qhcp.onrender.com/docs
+- **ReDoc:** https://devtrack-api-qhcp.onrender.com/redoc
+- **Health check:** https://devtrack-api-qhcp.onrender.com/health
+
+Try it: register a user via `POST /auth/register`, log in via `POST /auth/login`
+(or use Swagger's built-in "Authorize" button), then create a project and an issue
+and watch `GET /dashboard/summary` update in real time.
+
+Note: the free-tier instance may take a few seconds to wake up on the first request
+after a period of inactivity.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
