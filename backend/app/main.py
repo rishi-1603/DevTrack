@@ -3,7 +3,7 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.api import auth, comments, dashboard, issues, projects, users
 from app.core.config import settings
@@ -75,6 +75,12 @@ app.include_router(projects.router)
 app.include_router(issues.router)
 app.include_router(comments.router)
 app.include_router(dashboard.router)
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    """Redirect the bare domain to the interactive API docs."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health", tags=["health"])
