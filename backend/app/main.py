@@ -1,16 +1,18 @@
 """DevTrack FastAPI application entrypoint."""
+import asyncio
 import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from app.api import auth, comments, dashboard, issues, projects, users
+from app.api import auth, comments, dashboard, issues, notifications, projects, users, ws
 from app.core.config import settings
 from app.core.logging import get_access_logger, get_logger, setup_logging
 from app.database import models  # noqa: F401  (ensures models are registered on metadata)
 from app.database.session import Base as DeclarativeBase
 from app.database.session import engine
+from app.services import realtime
 from app.utils.exceptions import AppException
 
 setup_logging()
@@ -75,6 +77,8 @@ app.include_router(projects.router)
 app.include_router(issues.router)
 app.include_router(comments.router)
 app.include_router(dashboard.router)
+app.include_router(notifications.router)
+app.include_router(ws.router)
 
 
 @app.get("/", include_in_schema=False)
@@ -94,4 +98,10 @@ def on_startup() -> None:
     """Create tables automatically only in local/dev SQLite runs; Postgres uses Alembic migrations."""
     if settings.DATABASE_URL.startswith("sqlite"):
         DeclarativeBase.metadata.create_all(bind=engine)
+
+    # Capture a reference to the running event loop so that synchronous
+    # service-layer code (running in FastAPI's worker thread pool) can
+    # schedule live WebSocket pushes onto it. See app/services/realtime.py.
+    realtime.set_event_loop(asyncio.get_event_loop())
+
     logger.info("%s application startup complete.", settings.APP_NAME)

@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.database.models import Comment, Issue, User, UserRole
+from app.database.models import Comment, Issue, NotificationType, User, UserRole
 from app.schemas.comment import CommentCreate
+from app.services.realtime import notify_user
 from app.utils.exceptions import NotFoundException, PermissionDeniedException
 
 logger = get_logger("comment_service")
@@ -18,13 +19,23 @@ def _get_issue_or_404(db: Session, issue_id: int) -> Issue:
 
 
 def add_comment(db: Session, issue_id: int, comment_in: CommentCreate, user: User) -> Comment:
-    _get_issue_or_404(db, issue_id)
+    issue = _get_issue_or_404(db, issue_id)
 
     comment = Comment(issue_id=issue_id, user_id=user.id, comment=comment_in.comment)
     db.add(comment)
     db.commit()
     db.refresh(comment)
     logger.info("Comment added to issue_id=%s by user_id=%s", issue_id, user.id)
+
+    # Notify the assignee that a comment was added, unless they wrote it themselves.
+    if issue.assigned_to and issue.assigned_to != user.id:
+        notify_user(
+            db,
+            user_id=issue.assigned_to,
+            notification_type=NotificationType.ISSUE_COMMENTED,
+            message=f"{user.name} commented on '{issue.title}'.",
+            issue_id=issue.id,
+        )
     return comment
 
 

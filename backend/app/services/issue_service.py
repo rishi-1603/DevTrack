@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.database.models import ActivityLog, Issue, IssueStatus, Project, User, UserRole
+from app.database.models import ActivityLog, Issue, IssueStatus, NotificationType, Project, User, UserRole
 from app.schemas.issue import IssueCreate, IssueUpdate
+from app.services.realtime import notify_user
 from app.utils.exceptions import BadRequestException, NotFoundException, PermissionDeniedException
 
 logger = get_logger("issue_service")
@@ -118,6 +119,16 @@ def assign_issue(db: Session, issue_id: int, assignee_id: int, user: User) -> Is
     db.add(ActivityLog(user_id=user.id, action=f"assigned issue '{issue.title}' to user_id={assignee_id}"))
     db.commit()
     logger.info("Issue id=%s assigned to user_id=%s by user_id=%s", issue.id, assignee_id, user.id)
+
+    # Real-time notification: skip self-assignment noise.
+    if assignee_id != user.id:
+        notify_user(
+            db,
+            user_id=assignee_id,
+            notification_type=NotificationType.ISSUE_ASSIGNED,
+            message=f"{user.name} assigned you the issue '{issue.title}'.",
+            issue_id=issue.id,
+        )
     return issue
 
 
@@ -138,4 +149,14 @@ def change_issue_status(db: Session, issue_id: int, new_status: IssueStatus, use
     db.add(ActivityLog(user_id=user.id, action=f"changed issue '{issue.title}' status to {new_status.value}"))
     db.commit()
     logger.info("Issue id=%s status changed to %s by user_id=%s", issue.id, new_status.value, user.id)
+
+    # Notify the assignee (if any, and if someone else made the change).
+    if issue.assigned_to and issue.assigned_to != user.id:
+        notify_user(
+            db,
+            user_id=issue.assigned_to,
+            notification_type=NotificationType.ISSUE_STATUS_CHANGED,
+            message=f"{user.name} changed the status of '{issue.title}' to {new_status.value}.",
+            issue_id=issue.id,
+        )
     return issue

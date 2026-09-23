@@ -2,7 +2,7 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base
@@ -27,6 +27,12 @@ class IssueStatus(str, enum.Enum):
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     DONE = "done"
+
+
+class NotificationType(str, enum.Enum):
+    ISSUE_ASSIGNED = "issue_assigned"
+    ISSUE_STATUS_CHANGED = "issue_status_changed"
+    ISSUE_COMMENTED = "issue_commented"
 
 
 class User(Base):
@@ -54,6 +60,9 @@ class User(Base):
     )
     activity_logs: Mapped[list["ActivityLog"]] = relationship(
         "ActivityLog", back_populates="user", cascade="all, delete-orphan"
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user", cascade="all, delete-orphan"
     )
 
 
@@ -124,3 +133,28 @@ class ActivityLog(Base):
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="activity_logs")
+
+
+class Notification(Base):
+    """A persisted, per-user notification (e.g. 'You were assigned an issue').
+
+    Persisted rather than purely in-memory/broadcast so that a user who is not
+    currently connected to the WebSocket still sees the notification the next
+    time they open the app (GET /notifications). If they *are* connected, the
+    same event is pushed live over the WebSocket at creation time.
+    """
+
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        nullable=False,
+    )
+    message: Mapped[str] = mapped_column(String(500), nullable=False)
+    issue_id: Mapped[int | None] = mapped_column(ForeignKey("issues.id"), nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="notifications")
