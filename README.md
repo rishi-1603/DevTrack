@@ -43,7 +43,17 @@ comments, an activity log, and a cached dashboard summary.
   bound abuse); fails open (allows requests) if Redis itself is down --
   see `app/utils/rate_limit.py` for why that trade-off was made deliberately
 - Dockerized (API + worker + PostgreSQL + Redis) via docker-compose
-- GitHub Actions CI running lint + tests on every push/PR
+- GitHub Actions CI: lint + isolated-SQLite unit tests on every push, plus
+  two additional jobs that run against **real** Postgres/Redis service
+  containers -- an Alembic migration round-trip check (catches
+  Postgres-specific bugs SQLite's forgiving type system would miss --
+  this project already hit one: a duplicate index name) and a full
+  register->login->export->rate-limit smoke test driven over real HTTP
+  against a real API process + real Celery worker
+- No hardcoded insecure `SECRET_KEY` fallback: the app now fails to start
+  (loudly, at import time) if `SECRET_KEY` isn't set, instead of silently
+  signing JWTs with a hardcoded default in every environment including
+  production
 
 ## Tech Stack
 

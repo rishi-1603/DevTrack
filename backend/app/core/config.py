@@ -18,7 +18,16 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://devtrack:devtrack@localhost:5432/devtrack"
 
     # JWT
-    SECRET_KEY: str = "change-this-secret-key-in-production"
+    # No default on purpose (Day 3 fix): every previous version of this
+    # file shipped a hardcoded fallback ("change-this-secret-key-in-
+    # production") that would have silently signed real JWTs in
+    # production if an operator forgot to set SECRET_KEY -- the app would
+    # start up fine and look like it worked. Requiring the field with no
+    # default makes a missing SECRET_KEY a loud startup failure instead of
+    # a silent security hole. See backend/app/tests/conftest.py for how
+    # tests supply one, and .env.example / docker-compose.yml for how a
+    # real deployment must.
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days

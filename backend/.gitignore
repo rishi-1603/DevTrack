@@ -14,3 +14,7 @@ logs/*.log
 *.sqlite3
 .mypy_cache/
 .ruff_cache/
+
+# Generated CSV exports written by app/tasks/export_tasks.py -- runtime
+# output, never source, and may contain real project/issue data.
+exports/

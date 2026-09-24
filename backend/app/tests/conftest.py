@@ -1,4 +1,12 @@
 """Shared pytest fixtures: in-memory SQLite DB and a TestClient with overridden dependencies."""
+import os
+
+# Must be set before anything under app/ is imported: app/core/config.py
+# requires SECRET_KEY with no default (Day 3 fix -- see that file for why).
+# setdefault so a real CI/local env value, if one happens to be exported,
+# is not clobbered.
+os.environ.setdefault("SECRET_KEY", "test-secret-key-do-not-use-in-production")
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
