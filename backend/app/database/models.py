@@ -35,6 +35,13 @@ class NotificationType(str, enum.Enum):
     ISSUE_COMMENTED = "issue_commented"
 
 
+class ExportJobStatus(str, enum.Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -158,3 +165,38 @@ class Notification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="notifications")
+
+
+class ExportJob(Base):
+    """Tracks an asynchronous CSV export of a project's issues, run by a
+    Celery worker (see app/tasks/export_tasks.py) rather than inline in the
+    request/response cycle. Bounded in scope on purpose: a background job
+    queue is only justified here because CSV generation for a
+    large project is genuinely slow enough to matter and safe to run
+    out-of-band -- this is not added merely to have "Celery" on a resume.
+
+    Known limitation, stated rather than hidden: `file_path` points at a
+    file on the local filesystem of whichever worker produced it. This is
+    fine for a single-node deployment (what this project actually runs as)
+    but would need to move to shared/object storage (e.g. S3) before this
+    could run with more than one worker replica.
+    """
+
+    __tablename__ = "export_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
+    requested_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    status: Mapped[ExportJobStatus] = mapped_column(
+        Enum(ExportJobStatus, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=ExportJobStatus.PENDING,
+        nullable=False,
+    )
+    file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    row_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    project: Mapped["Project"] = relationship("Project")
+    requested_by: Mapped["User"] = relationship("User")

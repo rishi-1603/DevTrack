@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.rate_limit_dep import rate_limit_by_user
 from app.database.models import IssuePriority, IssueStatus, User
 from app.database.session import get_db
 from app.schemas.issue import (
@@ -17,12 +18,18 @@ from app.services import issue_service
 
 router = APIRouter(prefix="/issues", tags=["issues"])
 
+# Per-user (not per-IP): a single abusive account could otherwise flood a
+# project/notify every assignee with junk issues. 60/minute is generous
+# enough for real usage (including scripted bulk-creation during a sprint
+# planning session) while still bounding worst-case abuse.
+_create_issue_rate_limit = rate_limit_by_user("create_issue", limit=60, window_seconds=60)
+
 
 @router.post("", response_model=IssueRead, status_code=status.HTTP_201_CREATED)
 def create_issue(
     payload: IssueCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_create_issue_rate_limit),
 ):
     return issue_service.create_issue(db, payload, current_user)
 

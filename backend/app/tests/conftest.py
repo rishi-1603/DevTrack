@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.celery_app import celery_app
 from app.database import models  # noqa: F401  (register models on metadata)
 from app.database.session import Base, get_db
 from app.main import app
@@ -17,6 +18,14 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Tests never require a running Redis/Celery broker: task_always_eager makes
+# `.delay()` execute the task function synchronously, in-process, instead of
+# publishing to a broker. task_eager_propagates re-raises task exceptions
+# in the calling test instead of silently swallowing them, so a bug in a
+# task fails the test that triggered it, not silently.
+celery_app.conf.task_always_eager = True
+celery_app.conf.task_eager_propagates = True
 
 
 @pytest.fixture(scope="function", autouse=True)

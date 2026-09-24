@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from app.api import auth, comments, dashboard, issues, notifications, projects, users, ws
+from app.api import auth, comments, dashboard, exports, issues, notifications, projects, users, ws
 from app.core.config import settings
 from app.core.logging import get_access_logger, get_logger, setup_logging
 from app.database import models  # noqa: F401  (ensures models are registered on metadata)
@@ -58,7 +58,11 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         logger.error("Unhandled application error on %s %s: %s", request.method, request.url.path, exc.detail)
     else:
         logger.info("Handled error on %s %s: %s", request.method, request.url.path, exc.detail)
-    return JSONResponse(status_code=exc.status_code, content={"error": exc.__class__.__name__, "detail": exc.detail})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.__class__.__name__, "detail": exc.detail},
+        headers=getattr(exc, "headers", None),
+    )
 
 
 @app.exception_handler(Exception)
@@ -78,6 +82,7 @@ app.include_router(issues.router)
 app.include_router(comments.router)
 app.include_router(dashboard.router)
 app.include_router(notifications.router)
+app.include_router(exports.router)
 app.include_router(ws.router)
 
 

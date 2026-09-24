@@ -33,7 +33,16 @@ comments, an activity log, and a cached dashboard summary.
 - Consistent JSON error responses via custom exception classes
 - Full Pydantic v2 request/response validation
 - Alembic migrations for PostgreSQL schema management
-- Dockerized (API + PostgreSQL + Redis) via docker-compose
+- Real-time notifications over WebSocket (issue assignment, status changes,
+  comments), persisted to Postgres so they're also visible via a REST
+  endpoint if the client wasn't connected when the event happened
+- Asynchronous CSV export of a project's issues via a Celery + Redis task
+  queue, so generating the file doesn't block the request that triggered it
+- Redis-backed rate limiting on login/registration (per-IP, to slow
+  brute-force/spam) and issue/comment creation + exports (per-user, to
+  bound abuse); fails open (allows requests) if Redis itself is down --
+  see `app/utils/rate_limit.py` for why that trade-off was made deliberately
+- Dockerized (API + worker + PostgreSQL + Redis) via docker-compose
 - GitHub Actions CI running lint + tests on every push/PR
 
 ## Tech Stack
@@ -45,8 +54,10 @@ comments, an activity log, and a cached dashboard summary.
 | ORM / Migrations | SQLAlchemy 2.x, Alembic |
 | Database | PostgreSQL (SQLite in-memory for tests) |
 | Auth | JWT (python-jose), bcrypt (passlib), OAuth2PasswordBearer |
-| Caching | Redis (redis-py) |
-| Testing | pytest, pytest-cov, httpx / FastAPI TestClient |
+| Caching / Rate limiting | Redis (redis-py) |
+| Background jobs | Celery (broker + result backend: the same Redis instance) |
+| Real-time | WebSockets (FastAPI's native support) |
+| Testing | pytest, pytest-cov, httpx / FastAPI TestClient, fakeredis |
 | Containerization | Docker, docker-compose |
 | CI/CD | GitHub Actions |
 | Logging | Python `logging` with `RotatingFileHandler` |
@@ -180,6 +191,13 @@ instance before running migrations.
 | GET | `/issues/{id}/comments` | List comments on an issue (issue history) | Required |
 | DELETE | `/comments/{id}` | Delete a comment | Author/Admin |
 | GET | `/dashboard/summary` | Aggregate stats for the current user (Redis-cached, 60s TTL) | Required |
+| GET | `/notifications` | List the current user's notifications (`unread_only` filter) | Required |
+| POST | `/notifications/{id}/read` | Mark one notification as read | Owner |
+| POST | `/notifications/read-all` | Mark all of the current user's notifications as read | Required |
+| WS | `/ws/notifications?token=...` | Live push of new notifications (delivers unread backlog on connect) | Required (token as query param) |
+| POST | `/projects/{id}/export` | Queue an async CSV export of a project's issues (Celery) — `202 Accepted` | Required, rate-limited (5/min/user) |
+| GET | `/export-jobs/{id}` | Poll export job status (`pending`/`running`/`completed`/`failed`) | Requester/Owner/Admin |
+| GET | `/export-jobs/{id}/download` | Download the completed CSV | Requester/Owner/Admin |
 | GET | `/health` | Liveness probe | Public |
 
 Full interactive documentation (Swagger UI) is available at `/docs` once the app is
@@ -199,13 +217,39 @@ required) and cover: registration, login (success + wrong password), JWT validat
 comments, and permission checks (non-owner editing a project, non-admin deleting a
 user, non-author deleting a comment).
 
+## Running the background worker (required for CSV export)
+
+The `/projects/{id}/export` endpoint only *queues* a job — a separate
+Celery worker process actually generates the CSV. If you're not using
+`docker-compose` (which already runs a `worker` service), start one
+yourself alongside the API:
+
+```bash
+cd backend
+source .venv/bin/activate
+celery -A app.core.celery_app.celery_app worker --loglevel=info
+```
+
+This requires a reachable Redis instance (same `REDIS_HOST`/`REDIS_PORT`
+the API uses for caching and rate limiting). Without a running worker, an
+export job will sit in `pending` forever — it degrades to "nothing happens
+past 202 Accepted," not a crash, but it also never completes, so this is a
+genuine operational dependency worth knowing about, not an implementation
+detail you can ignore.
+
 ## Future Improvements
 
 - File attachments on issues (e.g. screenshots, logs)
-- Email notifications on issue assignment / status change
-- CSV export of projects and issues
+- Email notifications (the current notification system is in-app: persisted
+  + WebSocket push, not email)
 - A per-issue activity timeline (currently activity is logged globally per user,
   not yet surfaced per-issue in the API)
+- Celery task retry/backoff and a dead-letter queue for permanently-failed
+  export jobs (today a failed task marks the job `failed` and stops; there
+  is no automatic retry)
+- Moving exported CSVs to shared/object storage (e.g. S3) instead of local
+  disk, which is what would be required to run more than one worker
+  replica correctly (see the `ExportJob` model's docstring)
 
 ## Live Demo
 

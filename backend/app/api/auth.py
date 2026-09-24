@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.rate_limit_dep import rate_limit_by_ip
 from app.database.models import User
 from app.database.session import get_db
 from app.schemas.token import ChangePasswordRequest, RefreshTokenRequest, Token
@@ -12,14 +13,27 @@ from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Per-IP limits on the two credential-related endpoints attackers actually
+# automate: unlimited /auth/register lets one client mass-create accounts
+# (spam/abuse), and unlimited /auth/login is a brute-force oracle. Both are
+# scoped by IP (see app/core/rate_limit_dep.py's docstring for why -- there
+# is no authenticated user yet at this point in the request).
+_login_rate_limit = rate_limit_by_ip("login", limit=10, window_seconds=60)
+_register_rate_limit = rate_limit_by_ip("register", limit=5, window_seconds=60)
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(_register_rate_limit)],
+)
 def register(user_in: UserCreate, db: Session = Depends(get_db)) -> User:
     """Create a new user account."""
     return auth_service.register_user(db, user_in)
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, dependencies=[Depends(_login_rate_limit)])
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> Token:
     """Authenticate with email/password (OAuth2 form) and receive a JWT token pair."""
     user = auth_service.authenticate_user(db, form_data.username, form_data.password)

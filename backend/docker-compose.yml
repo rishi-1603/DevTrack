@@ -24,6 +24,36 @@ services:
       CORS_ORIGINS: "*"
     volumes:
       - ./logs:/app/logs
+      # Shared with the worker container: the export CSVs a Celery task
+      # writes to disk must be visible to the api container's download
+      # endpoint too. Without this shared volume, the worker and api
+      # containers would each have their own separate filesystem and
+      # GET /export-jobs/{id}/download would 404/500 looking for a file
+      # that only exists inside the worker container -- a real bug that
+      # would only surface once this ran as actually-separate containers,
+      # not when running both processes on one machine during development.
+      - devtrack_exports:/app/exports
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: devtrack_worker
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info
+    environment:
+      APP_NAME: DevTrack
+      APP_ENV: development
+      DATABASE_URL: postgresql://devtrack:devtrack@db:5432/devtrack
+      SECRET_KEY: replace-with-a-long-random-secret-key
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      LOG_DIR: logs
+      LOG_LEVEL: INFO
+    volumes:
+      - ./logs:/app/logs
+      - devtrack_exports:/app/exports
     depends_on:
       - db
       - redis
@@ -50,3 +80,4 @@ services:
 
 volumes:
   devtrack_pgdata:
+  devtrack_exports:
