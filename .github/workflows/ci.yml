@@ -256,3 +256,26 @@ jobs:
         run: |
           echo "---- api.log ----"; cat api.log || true
           echo "---- worker.log ----"; cat worker.log || true
+
+  docker-build:
+    # Verifies backend/Dockerfile actually builds. Added Day 3 after the
+    # identical job caught a genuine, previously-unknown build failure in
+    # the sibling CertiFake project (its unpinned python:3.11-slim base had
+    # moved to Debian trixie, where three of its apt packages no longer
+    # exist). Nothing had ever built this project's image either -- the
+    # `test` and smoke-test jobs above deliberately run against the
+    # runner's own Python, not the container, so a broken Dockerfile would
+    # have gone unnoticed here too.
+    #
+    # Build context is backend/ (matching docker-compose.yml's `build: .`
+    # inside backend/), so the image sees requirements.txt and app/ at the
+    # paths its COPY instructions expect.
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t devtrack-api:ci backend
