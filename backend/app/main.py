@@ -109,4 +109,24 @@ def on_startup() -> None:
     # schedule live WebSocket pushes onto it. See app/services/realtime.py.
     realtime.set_event_loop(asyncio.get_event_loop())
 
+    # Reap export jobs abandoned by a worker that died mid-task, so a client
+    # polling GET /export-jobs/{id} gets a terminal "failed" with an
+    # explanation instead of waiting forever on a job nothing will ever
+    # advance. See app/tasks/export_tasks.py:recover_stranded_export_jobs
+    # for why the threshold is deliberately generous (a false positive marks
+    # a legitimately in-flight job as failed). Wrapped so a database hiccup
+    # at startup degrades this one cleanup step rather than preventing the
+    # whole API from booting.
+    try:
+        from app.database.session import SessionLocal
+        from app.tasks.export_tasks import recover_stranded_export_jobs
+
+        db = SessionLocal()
+        try:
+            recover_stranded_export_jobs(db)
+        finally:
+            db.close()
+    except Exception as exc:  # noqa: BLE001 -- startup cleanup must never block boot
+        logger.error("Stranded export-job recovery skipped at startup: %s: %s", type(exc).__name__, exc)
+
     logger.info("%s application startup complete.", settings.APP_NAME)

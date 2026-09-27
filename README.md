@@ -42,6 +42,35 @@ comments, an activity log, and a cached dashboard summary.
   brute-force/spam) and issue/comment creation + exports (per-user, to
   bound abuse); fails open (allows requests) if Redis itself is down --
   see `app/utils/rate_limit.py` for why that trade-off was made deliberately
+- Reliable background jobs (Day 4): the export task now actually retries.
+  `max_retries=2` had been declared on the task from the start with **no
+  `self.retry()` call anywhere in its body**, so the setting was inert --
+  any exception marked the job permanently failed on the first attempt, and
+  a transient database lock or filesystem blip was indistinguishable from a
+  genuine bug. Now: up to 3 attempts with exponential backoff + jitter,
+  genuinely permanent failures (missing job row) skip retrying instead of
+  burning the budget, and exhausted jobs are recorded in a Redis
+  dead-letter list (`app/utils/dead_letter.py`) carrying enough of the
+  original request to replay by hand. `attempts` is persisted on the row
+  (migration `0004`) and exposed through `GET /export-jobs/{id}`, so retry
+  history is visible after the fact rather than only in worker logs.
+  - The row is deliberately left non-terminal *between* attempts -- marking
+    it failed on the first exception would show a polling client a failure
+    that then succeeds.
+  - Jobs abandoned by a worker that died mid-task are reaped at API startup
+    (`recover_stranded_export_jobs`) and reported as terminally failed with
+    an explanation, instead of sitting in `running` forever while a client
+    polls a completion that can never arrive. The staleness threshold is
+    deliberately far larger than Celery's `task_time_limit`, because a false
+    positive marks a legitimately in-flight job as failed.
+  - The dead-letter list **fails open**: if Redis is down the push is logged
+    at CRITICAL and dropped, and the worker does not crash, because the
+    Postgres row (`status=failed` + `error_message`) is already the
+    authoritative record. This is the *opposite* bias to the sibling
+    CertiFake project's Kafka DLQ, where the envelope is the only surviving
+    copy of the event and a failed publish must therefore block the offset
+    commit. Same phrase, different correct answer -- the difference is which
+    store is authoritative.
 - Dockerized (API + worker + PostgreSQL + Redis) via docker-compose
 - GitHub Actions CI: lint + isolated-SQLite unit tests on every push, plus
   two additional jobs that run against **real** Postgres/Redis service
@@ -254,12 +283,16 @@ detail you can ignore.
   + WebSocket push, not email)
 - A per-issue activity timeline (currently activity is logged globally per user,
   not yet surfaced per-issue in the API)
-- Celery task retry/backoff and a dead-letter queue for permanently-failed
-  export jobs (today a failed task marks the job `failed` and stops; there
-  is no automatic retry)
 - Moving exported CSVs to shared/object storage (e.g. S3) instead of local
   disk, which is what would be required to run more than one worker
   replica correctly (see the `ExportJob` model's docstring)
+- Automatic **re-enqueue** of jobs recovered as stranded. Today
+  `recover_stranded_export_jobs()` correctly reports them as terminally
+  failed so clients stop waiting, but the user must request the export
+  again. Re-running them automatically needs a claim/lease mechanism (a
+  worker heartbeat, or Celery `acks_late` plus a broker visibility timeout)
+  to avoid double-executing a task whose worker is merely slow rather than
+  dead -- a larger change than this pass warranted
 
 ## Live Demo
 

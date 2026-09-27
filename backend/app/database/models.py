@@ -195,6 +195,15 @@ class ExportJob(Base):
     file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     row_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # How many times the Celery task actually ran for this job (1 = succeeded
+    # or failed on the first try with no retry). Added in migration 0004
+    # alongside real retry support: before that, `max_retries=2` was declared
+    # on the task but no `self.retry()` call existed anywhere, so nothing was
+    # ever retried and there was nothing to count. Persisted on the row --
+    # not just read from Celery's `self.request.retries` -- so the number
+    # survives worker restarts and is visible to anyone querying the job via
+    # the API after the fact.
+    attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
