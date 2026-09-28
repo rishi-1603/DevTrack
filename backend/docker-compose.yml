@@ -1,5 +1,6 @@
-version: "3.9"
-
+# Top-level `version:` removed (Day 5): it is obsolete in Compose v2 and emits
+# a warning on every invocation. Verified with `docker compose config`, which
+# is now run in CI -- this file had never been validated by anything before.
 services:
   api:
     build: .
@@ -33,9 +34,39 @@ services:
       # would only surface once this ran as actually-separate containers,
       # not when running both processes on one machine during development.
       - devtrack_exports:/app/exports
+    # Was the short form (`- db`, `- redis`), which means service_started:
+    # wait for the CONTAINER to start, not for Postgres to accept connections.
+    #
+    # This is not a crash risk -- on_startup() is deliberately DB-tolerant
+    # (create_all runs only for SQLite, and recover_stranded_export_jobs is
+    # wrapped in a broad except that logs and continues, so boot is never
+    # blocked). The real consequence of the race is subtler and worse than a
+    # crash, because it is silent: if Postgres is not yet accepting
+    # connections, that startup recovery step is SKIPPED, so export jobs left
+    # stranded by a previous crash stay unrecovered until the next restart.
+    # Requests served during the window also fail with 500s.
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Python, not curl: backend/Dockerfile installs only gcc and libpq-dev on
+    # python:3.12-slim-trixie, neither of which provides curl/wget/nc. A
+    # curl-based check would fail forever and, now that `db`/`redis` gate on
+    # health, anything gating on this service would never start.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    restart: unless-stopped
 
   worker:
     build: .
@@ -55,8 +86,27 @@ services:
       - ./logs:/app/logs
       - devtrack_exports:/app/exports
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Deliberately NO healthcheck on the worker, and this is a decision rather
+    # than an oversight. Unlike CertiFake's workers (which run a metrics HTTP
+    # server on :8000), this Celery worker exposes no HTTP surface at all, so
+    # there is nothing to probe. The alternatives are both worse:
+    #   * `celery inspect ping` does a broadcast round-trip through the broker;
+    #     it is slow, can time out under load, and combined with
+    #     `restart: unless-stopped` a false negative would cause a restart loop
+    #     -- a self-inflicted outage nobody can debug from a compose file.
+    #   * Adding an HTTP server purely to have something to probe is new
+    #     surface area for its own sake.
+    # What IS covered: if the worker process exits, the container exits and the
+    # restart policy brings it back; and Celery retries broker connection on its
+    # own, so a slow Redis is survivable. A real liveness signal (a heartbeat
+    # file, or `inspect ping` with a generous threshold tuned against an actual
+    # running stack) needs a live deployment to calibrate and is recorded as a
+    # future improvement, not faked here.
+    restart: unless-stopped
 
   db:
     image: postgres:16
@@ -70,6 +120,19 @@ services:
       - "5432:5432"
     volumes:
       - devtrack_pgdata:/var/lib/postgresql/data
+    # pg_isready verified present at /usr/bin/pg_isready in postgres:16
+    # (amd64 sha256:a85daf0d...) by listing its layer contents -- not assumed.
+    # A healthcheck naming a binary the image lacks marks it permanently
+    # unhealthy, and `api`/`worker` now gate on that, so they would never
+    # start: a worse outcome than having no healthcheck at all.
+    # start_period covers initial cluster init on an empty volume, which is
+    # slower than a warm restart.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devtrack -d devtrack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   redis:
     image: redis:7-alpine
@@ -77,6 +140,14 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    # redis-cli verified present at /usr/local/bin/redis-cli in redis:7-alpine
+    # (amd64 sha256:ca0acbb1...) by listing its layer contents.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   devtrack_pgdata:

@@ -279,3 +279,58 @@ jobs:
 
       - name: Build image
         run: docker build -t devtrack-api:ci backend
+
+  config-validation:
+    # Deployment-config checks, added Day 5. Motivation is concrete, not
+    # theoretical: the sibling CertiFake project's compose stack was broken
+    # for 17 days because MinIO deleted `minio/minio` from Docker Hub on
+    # 2026-09-11, and nothing caught it -- `docker-compose config` validates
+    # SYNTAX, not whether an image still exists, and no Docker daemon was
+    # available where any of this was developed, so the stack was never
+    # actually brought up.
+    #
+    # None of the three checks below needs a Docker daemon: compose
+    # validation is client-side, and image existence is answered anonymously
+    # by the registry v2 API.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML (for the consistency checker)
+        run: python -m pip install -q pyyaml
+
+      - name: Validate docker-compose.yml
+        # SECRET_KEY is required for interpolation; the value is irrelevant
+        # here because nothing is started, only parsed.
+        env:
+          SECRET_KEY: ci-validation-only-not-a-real-secret
+        working-directory: backend
+        run: |
+          docker compose version
+          docker compose config --quiet
+          echo "compose config: valid"
+
+      - name: Check every referenced image still exists in its registry
+        # Resolves compose `image:` refs AND Dockerfile `FROM` lines. Docker
+        # Hub reports a nonexistent repository with the same 401 it uses for
+        # a private one, so the script distinguishes them by whether the
+        # token service granted any pull scope -- validated against
+        # known-good (postgres, redis) and known-bad (minio/minio,
+        # bitnami/minio) controls.
+        run: python3 scripts/check_images.py backend/docker-compose.yml backend/Dockerfile
+
+      - name: Cross-file consistency (compose <-> code expectations)
+        # Asserts things no single-file validator can see: a service that
+        # sets DATABASE_URL/REDIS_HOST pointing at another service must have
+        # a depends_on edge for it; nothing may gate on
+        # `condition: service_healthy` for a service that defines no
+        # healthcheck (that wedges the dependent forever); no placeholder
+        # image strings; no obsolete top-level `version:`.
+        run: python3 scripts/check_config_consistency.py

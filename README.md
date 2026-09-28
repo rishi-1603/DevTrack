@@ -72,6 +72,7 @@ comments, an activity log, and a cached dashboard summary.
     commit. Same phrase, different correct answer -- the difference is which
     store is authoritative.
 - Dockerized (API + worker + PostgreSQL + Redis) via docker-compose
+- Deployment config validated in CI (Day 5) — see below
 - GitHub Actions CI: lint + isolated-SQLite unit tests on every push, plus
   two additional jobs that run against **real** Postgres/Redis service
   containers -- an Alembic migration round-trip check (catches
@@ -83,6 +84,74 @@ comments, an activity log, and a cached dashboard summary.
   (loudly, at import time) if `SECRET_KEY` isn't set, instead of silently
   signing JWTs with a hardcoded default in every environment including
   production
+
+### Deployment config hardening (Day 5)
+
+`docker-compose.yml` had never been validated by anything — no Docker daemon
+existed where it was written. Three real defects, plus the checks that now
+prevent their recurrence:
+
+- **A startup race that failed *silently*.** `api` and `worker` used the short
+  `depends_on: [db, redis]` form, which means `service_started`: wait for the
+  container to start, not for Postgres to accept connections. This is **not** a
+  crash risk, and it is worth being precise about why — `on_startup()` is
+  deliberately DB-tolerant (`create_all` runs only for SQLite, and
+  `recover_stranded_export_jobs` is wrapped in a broad `except` that logs and
+  continues, so boot is never blocked). The actual consequence is worse than a
+  crash because nothing reports it: if Postgres isn't ready, Day 4's
+  stranded-job recovery is **skipped**, so export jobs abandoned by a previous
+  crashed worker stay unrecovered until the *next* restart. Both services now
+  gate on `condition: service_healthy`, backed by real healthchecks.
+- **Healthcheck binaries verified, not assumed.** `pg_isready` was confirmed
+  present at `/usr/bin/pg_isready` in `postgres:16` (amd64
+  `sha256:a85daf0d…`) and `redis-cli` at `/usr/local/bin/redis-cli` in
+  `redis:7-alpine` (`sha256:ca0acbb1…`) by downloading and listing each image's
+  layer tarballs. This matters more than it sounds: a healthcheck naming a
+  binary the image lacks marks that service permanently unhealthy, and once
+  dependents gate on `service_healthy` they would never start — turning a
+  self-recovering stack into one that is dead on arrival. The `api` healthcheck
+  uses **Python**, because `backend/Dockerfile` installs only `gcc` and
+  `libpq-dev` on `python:3.12-slim-trixie` — no curl, wget or nc.
+- **The worker deliberately has no healthcheck.** Unlike CertiFake's workers
+  (which run a metrics HTTP server), this Celery worker exposes no HTTP surface,
+  so there is nothing to probe. `celery inspect ping` was considered and
+  rejected: it does a broadcast round-trip through the broker, can time out
+  under load, and combined with `restart: unless-stopped` a false negative
+  would cause a restart loop — a self-inflicted outage nobody could debug from a
+  compose file. What *is* covered: process exit restarts the container, and
+  Celery retries broker connection on its own.
+- Obsolete top-level `version:` removed; `restart: unless-stopped` and a
+  healthcheck added to `api`.
+- **Two new CI checks, neither needing a Docker daemon:**
+  `scripts/check_images.py` resolves every image reference — compose `image:`
+  *and* Dockerfile `FROM` — against its registry and fails if any can no longer
+  be pulled; `scripts/check_config_consistency.py` asserts the things no
+  single-file validator can see (a service setting `DATABASE_URL`/`REDIS_HOST`
+  at another service must have the matching `depends_on` edge; nothing may gate
+  on `service_healthy` for a service with no healthcheck; no placeholder image
+  strings). Both are byte-identical to CertiFake's copies on purpose — three
+  divergent forks of a config checker would be the same duplication problem it
+  exists to prevent. Dependency inference reads the **hostname out of the env
+  value** rather than assuming a service is called `postgres`, which is why the
+  same script works here (service named `db`, `REDIS_HOST` rather than
+  `REDIS_URL`) and there.
+- **Both checkers were mutation-tested**: each was run against deliberately
+  reintroduced defects (placeholder image, deleted worker deployment,
+  `replicas` on an HPA-managed Deployment, undocumented Secret key, dropped
+  `depends_on` edge, obsolete `version:`, Prometheus scraping a nonexistent
+  service, `service_healthy` on a service with no healthcheck) and caught all
+  eight. This was not a formality — an earlier version silently skipped *every*
+  k8s check while still printing PASS, because a file lookup matched filenames
+  instead of extensions.
+
+**Still not verified:** nothing has ever started these containers. Compose
+syntax and interpolation are validated (`docker compose config` in CI), image
+references are confirmed pullable, and the healthcheck *binaries* are confirmed
+present — but that a container actually reaches `healthy`, and that this stack
+comes up end-to-end, remains untested. The `real-infra-smoke-test` CI job runs
+the real API + real Celery worker against real Postgres/Redis service
+containers, which is strong evidence the application works; it does not
+exercise this compose file.
 
 ## Tech Stack
 
