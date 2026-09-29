@@ -280,6 +280,89 @@ jobs:
       - name: Build image
         run: docker build -t devtrack-api:ci backend
 
+  # ===========================================================================
+  # Boots backend/docker-compose.yml for real and drives requests through it.
+  #
+  # WHY THIS IS A SEPARATE JOB FROM real-infra-smoke-test
+  # -----------------------------------------------------
+  # That job already drives the same HTTP sequence against real Postgres and
+  # real Redis and passes -- but it runs uvicorn and celery as bare processes
+  # on the runner, uses GitHub Actions service containers for the
+  # infrastructure, and runs `alembic upgrade head` as its own manual step. So
+  # it tests the APPLICATION against real infra; it has never tested the
+  # DEPLOYMENT ARTIFACT. Untested until now: docker-compose.yml itself,
+  # Dockerfile's CMD, service-name DNS between containers, the healthchecks,
+  # and the shared volume between api and worker.
+  #
+  # That distinction is not academic -- it is how a real bug was found. The
+  # compose stack had no schema-creation step at all: the image CMD is a bare
+  # uvicorn, and app/main.py:on_startup() calls create_all() only for SQLite
+  # while compose configures Postgres. So `docker compose up` brought the API
+  # up against an EMPTY database, where every DB-touching request fails with
+  # `relation "users" does not exist`. Both places the stack was ever exercised
+  # create the schema some other way (pytest uses SQLite; real-infra-smoke-test
+  # migrates on the runner), so nothing could have caught it. Fixed by the
+  # one-shot `migrate` service in backend/docker-compose.yml, which api and
+  # worker gate on with condition: service_completed_successfully.
+  #
+  # See scripts/compose_smoke_test.sh for the assertions, which include the one
+  # that only separate containers can make: the export CSV written by the
+  # worker container must be readable by the api container via the shared
+  # devtrack_exports volume.
+  # ===========================================================================
+  compose-smoke-test:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    # Four services, two of which are built from the same Dockerfile, plus a
+    # Celery worker that has to pick up a real task from a real broker.
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # The only Settings field without a default; compose requires it to
+      # interpolate (`${SECRET_KEY:?...}`). Throwaway value -- nothing here is
+      # a real credential, and the app deliberately has no insecure fallback so
+      # that a missing secret is loud rather than silently "working".
+      SECRET_KEY: ci-smoke-only-not-a-real-secret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --wait blocks until every healthchecked service reports healthy, so
+      # this step is also the first empirical confirmation that the api/db/
+      # redis healthchecks pass in a live stack -- until now they were only
+      # reasoned about (by verifying pg_isready/redis-cli/python exist in the
+      # exact images via their layer tarballs). It returns 0 despite `migrate`
+      # exiting, because api and worker depend on it with
+      # service_completed_successfully -- without that edge compose treats any
+      # exited container as a wait failure (docker/compose#10596).
+      - name: Boot the stack and wait for healthchecks
+        run: |
+          docker compose version
+          docker compose up -d --build --wait --wait-timeout 600
+
+      # Recorded pass or fail: `migrate` exits 0 by design, so a plain
+      # `docker compose ps` (which hides exited containers) would look like the
+      # service vanished. -a shows it and its exit status.
+      - name: Report container states (including the one-shot migrator)
+        if: always()
+        run: docker compose ps -a
+
+      - name: Run the compose smoke test
+        run: bash ../scripts/compose_smoke_test.sh
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose logs --tail 120
+
+      - name: Tear down (volumes too, so no state leaks between runs)
+        if: always()
+        run: docker compose down -v --remove-orphans --timeout 30
+
   config-validation:
     # Deployment-config checks, added Day 5. Motivation is concrete, not
     # theoretical: the sibling CertiFake project's compose stack was broken

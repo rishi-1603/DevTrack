@@ -2,6 +2,66 @@
 # a warning on every invocation. Verified with `docker compose config`, which
 # is now run in CI -- this file had never been validated by anything before.
 services:
+  # ---------------------------------------------------------------------------
+  # WHY THIS SERVICE EXISTS (added Day 6: it fixes a bug that had never been
+  # caught, because nothing had ever run `docker compose up` on this stack)
+  #
+  # Before this service existed, NOTHING in the compose stack created the
+  # database schema:
+  #   * the image's CMD is a bare `uvicorn app.main:app ...` (backend/Dockerfile)
+  #     -- no entrypoint, no migration step;
+  #   * app/main.py:on_startup() calls create_all() ONLY when DATABASE_URL
+  #     starts with "sqlite", and compose sets a Postgres URL;
+  #   * so `docker compose up` brought the API and worker up against a
+  #     completely EMPTY Postgres, and the first DB-touching request would fail
+  #     with `relation "users" does not exist`.
+  #
+  # It went unnoticed for the life of the project because the two places this
+  # stack was ever exercised both create the schema some other way: the pytest
+  # suite runs on SQLite (where on_startup() does call create_all), and the
+  # real-infra-smoke-test CI job runs `alembic upgrade head` as a separate
+  # manual step ON THE RUNNER before starting uvicorn. Neither path runs the
+  # containers as actually deployed. The compose-smoke-test job added alongside
+  # this service is what closes that gap.
+  #
+  # Why a one-shot service rather than migrations in the API's command:
+  #   * it runs EXACTLY once. Putting `alembic upgrade head &&` in both api's
+  #     and worker's commands would run two concurrent migrations against one
+  #     database -- Alembic takes no lock, so that is a race, not a redundancy.
+  #   * `condition: service_completed_successfully` on the dependants (below)
+  #     means api/worker cannot start until the schema exists, which also fixes
+  #     the "works on second `up` but not the first" class of bug.
+  #   * it keeps the Dockerfile's CMD single-purpose; the same image serves as
+  #     api, worker and migrator with only the command differing.
+  #
+  # `restart: "no"` is REQUIRED and not the default-by-omission it looks like:
+  # the rest of this file uses `restart: unless-stopped`, which would restart a
+  # container that exits 0 and turn a one-shot migration into an infinite loop.
+  #
+  # Compose detail worth recording, because it is counter-intuitive:
+  # `docker compose up --wait` exits 1 on ANY container that has exited, even
+  # with code 0, UNLESS a long-running service depends on it with
+  # `service_completed_successfully` -- that condition is what tells compose the
+  # exit was the intended outcome (docker/compose#10596). Both api and worker
+  # declare it below, so `up --wait` returns 0 with this container exited.
+  # ---------------------------------------------------------------------------
+  migrate:
+    build: .
+    container_name: devtrack_migrate
+    command: alembic upgrade head
+    environment:
+      # Must be set explicitly: Settings.DATABASE_URL defaults to a localhost
+      # URL, which inside this container would point at nothing.
+      DATABASE_URL: postgresql://devtrack:devtrack@db:5432/devtrack
+      # The only field Settings requires without a default; migrations/env.py
+      # imports app.core.config, so importing it at all needs this.
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in a .env file -- see backend/.env.example}
+      LOG_LEVEL: INFO
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build: .
     container_name: devtrack_api
@@ -50,6 +110,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # Without this edge the API starts against an unmigrated database and
+      # every DB-touching request 500s with `relation ... does not exist`.
+      # It is also what lets `docker compose up --wait` treat migrate's exit 0
+      # as success rather than as a dead container (see the migrate service).
+      migrate:
+        condition: service_completed_successfully
     # Python, not curl: backend/Dockerfile installs only gcc and libpq-dev on
     # python:3.12-slim-trixie, neither of which provides curl/wget/nc. A
     # curl-based check would fail forever and, now that `db`/`redis` gate on
@@ -90,6 +156,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # The worker writes to export_jobs (and reads projects/issues while
+      # building a CSV), so it needs the schema just as much as the API does.
+      # Gating it here rather than relying on "the API will have migrated by
+      # the time a task arrives" keeps the ordering declarative: a worker that
+      # starts before the schema exists can pick up a task and fail on it.
+      migrate:
+        condition: service_completed_successfully
     # Deliberately NO healthcheck on the worker, and this is a decision rather
     # than an oversight. Unlike CertiFake's workers (which run a metrics HTTP
     # server on :8000), this Celery worker exposes no HTTP surface at all, so
