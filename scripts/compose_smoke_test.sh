@@ -184,12 +184,27 @@ RECORDED_PATH="$($COMPOSE_CMD exec -T db psql -U devtrack -d devtrack -Atc \
 [ -n "$RECORDED_PATH" ] && [ "$RECORDED_PATH" != "" ] \
   || die "export_jobs.file_path is empty for job $JOB_ID -- the worker completed the job without recording where it wrote the CSV"
 info "worker recorded file_path: $RECORDED_PATH"
-case "$RECORDED_PATH" in
+
+# The recorded value is UNNORMALIZED, and this was found by running the test
+# rather than by reading the code: app/tasks/export_tasks.py builds EXPORT_DIR
+# with os.path.join(os.path.dirname(__file__), "..", "..", "exports") and never
+# calls normpath, so what lands in the database is literally
+# `/app/app/tasks/../../exports/export_<id>.csv`.
+#
+# That is not a bug -- the kernel resolves `..` so the file opens fine, and the
+# download endpoint serves it correctly -- but it does mean a naive string
+# prefix check against "/app/exports/" is wrong, which is exactly the mistake
+# the first run of this script made. Comparing resolved paths instead.
+RESOLVED_PATH="$(python3 -c "import os,sys; print(os.path.normpath(sys.argv[1]))" "$RECORDED_PATH")"
+info "resolved: $RESOLVED_PATH"
+case "$RESOLVED_PATH" in
   /app/exports/*) ;;
-  *) die "worker recorded '$RECORDED_PATH', which is NOT under /app/exports -- the shared devtrack_exports volume would not cover it and the api container could not serve the download" ;;
+  *) die "worker's export resolved to '$RESOLVED_PATH', which is NOT under /app/exports -- the shared devtrack_exports volume would not cover it and the api container could not serve the download" ;;
 esac
 
 for svc in worker api; do
+  # Checked with the path exactly as the worker recorded it, not the normalized
+  # one: the point is that the API can open the very string the worker stored.
   $COMPOSE_CMD exec -T "$svc" test -s "$RECORDED_PATH" \
     || die "$svc container cannot see $RECORDED_PATH -- the shared devtrack_exports volume is not working"
   pass "$svc container sees $RECORDED_PATH"
