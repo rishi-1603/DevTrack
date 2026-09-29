@@ -73,13 +73,19 @@ comments, an activity log, and a cached dashboard summary.
     store is authoritative.
 - Dockerized (API + worker + PostgreSQL + Redis) via docker-compose
 - Deployment config validated in CI (Day 5) — see below
+- **Compose stack booted and driven end to end in CI (Day 6)** — see below.
+  This is also what found that the stack had no schema-creation step at all,
+  so `docker compose up` was starting the API against an empty Postgres.
 - GitHub Actions CI: lint + isolated-SQLite unit tests on every push, plus
-  two additional jobs that run against **real** Postgres/Redis service
-  containers -- an Alembic migration round-trip check (catches
-  Postgres-specific bugs SQLite's forgiving type system would miss --
-  this project already hit one: a duplicate index name) and a full
-  register->login->export->rate-limit smoke test driven over real HTTP
-  against a real API process + real Celery worker
+  three additional jobs that exercise **real** infrastructure rather than
+  mocks. Two run against real Postgres/Redis service containers -- an Alembic
+  migration round-trip check (catches Postgres-specific bugs SQLite's
+  forgiving type system would miss -- this project already hit one: a
+  duplicate index name) and a full register->login->export->rate-limit smoke
+  test driven over real HTTP against a real API process + real Celery worker.
+  The third boots `docker-compose.yml` itself and drives the same flow through
+  the actual containers, which is what covers the deployment artifact rather
+  than just the application.
 - No hardcoded insecure `SECRET_KEY` fallback: the app now fails to start
   (loudly, at import time) if `SECRET_KEY` isn't set, instead of silently
   signing JWTs with a hardcoded default in every environment including
@@ -144,14 +150,46 @@ prevent their recurrence:
   k8s check while still printing PASS, because a file lookup matched filenames
   instead of extensions.
 
-**Still not verified:** nothing has ever started these containers. Compose
-syntax and interpolation are validated (`docker compose config` in CI), image
-references are confirmed pullable, and the healthcheck *binaries* are confirmed
-present — but that a container actually reaches `healthy`, and that this stack
-comes up end-to-end, remains untested. The `real-infra-smoke-test` CI job runs
-the real API + real Celery worker against real Postgres/Redis service
-containers, which is strong evidence the application works; it does not
-exercise this compose file.
+**Now verified in CI (Day 6).** The `compose-smoke-test` job runs
+`docker compose up -d --build --wait` on this file and then executes
+`scripts/compose_smoke_test.sh` against the running containers. It passed on
+commit `f404cd8` (run `36613268375`, 2026-09-29), having observed:
+
+- `migrate` exiting 0, and **all 7 tables plus `alembic_version` present inside
+  the `db` container** — migrations ran in the stack, not on the runner;
+- the `api` container reaching Docker's own `healthy` state, the first
+  empirical confirmation of that healthcheck rather than an inference from the
+  image containing `python`;
+- register → login → create project → create issue working through
+  service-name networking;
+- the Celery worker consuming a real task from real Redis and completing the
+  export;
+- the CSV the **worker** container wrote being readable by the **api**
+  container, and `GET /export-jobs/{id}/download` serving its contents.
+
+That last point is the one only separate containers can make, and it is what
+gives `ExportJob`'s documented limitation — "`file_path` points at a file on
+the local filesystem of whichever worker produced it" — real teeth: it holds
+only because both mount `devtrack_exports` at `/app/exports`. Running both
+processes on one host, as development did and as `real-infra-smoke-test` still
+does, cannot fail that way.
+
+It also found a genuine bug. **This stack previously had no schema-creation
+step at all**: the image `CMD` is a bare `uvicorn` with no entrypoint, and
+`app/main.py:on_startup()` calls `create_all()` only when `DATABASE_URL`
+starts with `sqlite` — while compose configures Postgres. So `docker compose
+up` brought the API up against an **empty database**, where every DB-touching
+request fails with `relation "users" does not exist`. Nothing caught it
+because the two places the stack was ever exercised both create the schema
+some other way: pytest runs on SQLite, and `real-infra-smoke-test` runs
+`alembic upgrade head` as a manual step on the runner. Fixed by the one-shot
+`migrate` service, which `api` and `worker` gate on with
+`condition: service_completed_successfully`.
+
+**Still not verified:** this repo has no Kubernetes manifests, so there is no
+deployment schema to validate here; and nothing exercises more than one worker
+replica, which is exactly the case `ExportJob`'s file-path limitation would
+break under.
 
 ## Tech Stack
 
