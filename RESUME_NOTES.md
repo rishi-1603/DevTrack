@@ -60,6 +60,7 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 110 tests at
 | Dependency audit | clean, and blocking | `pip-audit` on the pinned set: `No known vulnerabilities found`; was 37 across 5 packages on a green build, because the CI step had both `\|\| true` and `continue-on-error` |
 | JWT library | PyJWT 2.15.1 | `app/core/security.py`; python-jose removed — unmaintained, PYSEC-2025-185 unfixed |
 | WebSocket credential | 60 s ticket, `type: "ws"` | `POST /auth/ws-ticket`; rejected by every REST dependency, and access/refresh tokens are rejected by the socket |
+| Interpreter parity | CI == image == Python 3.12 | `check_config_consistency.py` fails `config-validation` if `ci.yml` and a Dockerfile disagree on Python; added after a sibling repo's pin was chosen against the wrong interpreter. Mutation-tested (exit 1 on mismatch) |
 | Signing-key floor | 32 bytes in production | `app/core/config.py` model validator; warns outside production so a dev key cannot take the live service down |
 | Migrations | 4 (+ round-trip) | `migrations/versions/0001..0004`; CI downgrades and re-upgrades them |
 | Compose services | 5 | `backend/docker-compose.yml`: api, worker, migrate, db, redis |
