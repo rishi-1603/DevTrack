@@ -173,12 +173,15 @@ def test_websocket_delivers_unread_backlog_on_connect(client):
 
     dev_headers = auth_headers(client, email="ws_dev1@example.com")
     dev_id = client.get("/users/me", headers=dev_headers).json()["id"]
-    dev_token = dev_headers["Authorization"].split(" ")[1]
+    # Day-7 remediation (finding S9): the socket takes a short-lived WS-only
+    # ticket, not the access token, because the credential has to ride in the
+    # query string. Minted here through the same endpoint a real client uses.
+    dev_ticket = client.post("/auth/ws-ticket", headers=dev_headers).json()["ticket"]
 
     # Notification created BEFORE the socket connects.
     client.post(f"/issues/{issue_id}/assign", json={"user_id": dev_id}, headers=owner_headers)
 
-    with client.websocket_connect(f"/ws/notifications?token={dev_token}") as ws:
+    with client.websocket_connect(f"/ws/notifications?token={dev_ticket}") as ws:
         backlog = ws.receive_json()
         assert backlog["event"] == "unread_backlog"
         assert backlog["unread_count"] == 1
@@ -197,9 +200,9 @@ def test_websocket_receives_live_push_after_connecting(client):
 
     dev_headers = auth_headers(client, email="ws_dev2@example.com")
     dev_id = client.get("/users/me", headers=dev_headers).json()["id"]
-    dev_token = dev_headers["Authorization"].split(" ")[1]
+    dev_ticket = client.post("/auth/ws-ticket", headers=dev_headers).json()["ticket"]
 
-    with client.websocket_connect(f"/ws/notifications?token={dev_token}") as ws:
+    with client.websocket_connect(f"/ws/notifications?token={dev_ticket}") as ws:
         backlog = ws.receive_json()
         assert backlog["unread_count"] == 0  # nothing assigned yet
 

@@ -1,10 +1,16 @@
 """WebSocket endpoint for real-time notifications.
 
 Auth: browsers cannot set an `Authorization` header on a WebSocket handshake,
-so the JWT access token is passed as a query parameter (`?token=...`) instead
--- the standard workaround for this well-known WebSocket limitation. The
-token is validated with the exact same `decode_token` used for REST auth, so
-it expires and is rejected on the same schedule as regular API tokens.
+so a credential has to be passed as a query parameter (`?token=...`) -- the
+standard workaround for this well-known WebSocket limitation. What is passed
+here is NOT the user's access token but a short-lived, WebSocket-only ticket
+minted from `POST /auth/ws-ticket` (`type: "ws"`, `WS_TOKEN_EXPIRE_SECONDS` to
+live). The distinction is the point: query strings are logged by proxies and
+browsers, so a leaked ticket can open a notification socket for a minute and
+can do nothing else, whereas a leaked access token could read and write the
+whole API for its full lifetime. Signature validation still goes through the
+same `decode_token` used for REST auth, so forgery and expiry are handled
+identically.
 
 Protocol: on connect, the server immediately sends any unread notifications
 (so refreshing the page or reconnecting doesn't lose anything), then keeps
@@ -16,7 +22,7 @@ frames just to detect disconnects promptly.
 import asyncio
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
-from jose import JWTError
+from jwt.exceptions import PyJWTError
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -33,9 +39,15 @@ logger = get_logger("ws_api")
 def _authenticate_ws_token(token: str, db: Session) -> User | None:
     try:
         payload = decode_token(token)
-    except JWTError:
+    except PyJWTError:
         return None
-    if payload.get("type") != "access":
+    # Day-7 remediation (finding S9): only a WebSocket ticket is accepted now,
+    # not a regular access token. The credential has to ride in the query string
+    # (browsers cannot set headers on a WS handshake), and query strings reach
+    # proxy and access logs -- so what is presented here should be worthless
+    # anywhere else. A `type: "ws"` ticket is rejected by every REST dependency
+    # and expires in seconds; see create_ws_token in app/core/security.py.
+    if payload.get("type") != "ws":
         return None
     user_id = payload.get("sub")
     if user_id is None:

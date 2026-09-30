@@ -2,7 +2,16 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from jose import JWTError, jwt
+# PyJWT rather than python-jose (Day-7 remediation, finding S2). python-jose
+# 3.3.0 carried PYSEC-2024-232/233 (fixed in 3.4.0) plus PYSEC-2025-185, which
+# has no published fix at all, and the project is effectively unmaintained; it
+# also pulled in `ecdsa`, which has an unfixed advisory of its own. The API
+# surface used across this codebase is two calls (`encode`, `decode`) and one
+# exception type, so the migration is exact: `JWTError` becomes `PyJWTError`,
+# which is likewise the base class for ExpiredSignatureError and
+# InvalidSignatureError, so every existing 401 path behaves identically.
+import jwt
+from jwt.exceptions import PyJWTError
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -50,8 +59,31 @@ def create_refresh_token(subject: str) -> str:
     )
 
 
+def create_ws_token(subject: str) -> str:
+    """Create a very short-lived ticket that is valid ONLY for the WebSocket
+    handshake (Day-7 remediation, finding S9).
+
+    Browsers cannot set an `Authorization` header when opening a WebSocket, so
+    the credential has to travel in the query string -- and query strings end up
+    in proxy logs, access logs and browser history. That is unavoidable, but
+    what lands in those logs does not have to be a full-scope API credential.
+
+    This ticket is `type: "ws"`, which `app/core/dependencies.py` rejects (it
+    requires `type == "access"`), so a ticket leaked from a log line cannot be
+    replayed against any REST endpoint. It also lives for
+    `WS_TOKEN_EXPIRE_SECONDS` rather than `ACCESS_TOKEN_EXPIRE_MINUTES`, so the
+    window in which a leaked ticket can open a socket is a minute at most.
+    Clients mint one per connection from `POST /auth/ws-ticket`.
+    """
+    return _create_token(
+        subject,
+        timedelta(seconds=settings.WS_TOKEN_EXPIRE_SECONDS),
+        extra_claims={"type": "ws"},
+    )
+
+
 def decode_token(token: str) -> dict[str, Any]:
-    """Decode and validate a JWT token. Raises JWTError on failure."""
+    """Decode and validate a JWT token. Raises PyJWTError on failure."""
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
 
@@ -60,6 +92,7 @@ __all__ = [
     "verify_password",
     "create_access_token",
     "create_refresh_token",
+    "create_ws_token",
     "decode_token",
-    "JWTError",
+    "PyJWTError",
 ]

@@ -199,10 +199,10 @@ break under.
 | Validation | Pydantic v2 |
 | ORM / Migrations | SQLAlchemy 2.x, Alembic |
 | Database | PostgreSQL (SQLite in-memory for tests) |
-| Auth | JWT (python-jose), bcrypt (passlib), OAuth2PasswordBearer |
+| Auth | JWT (PyJWT), bcrypt (passlib), OAuth2PasswordBearer, short-lived WS-only tickets |
 | Caching / Rate limiting | Redis (redis-py) |
 | Background jobs | Celery (broker + result backend: the same Redis instance) |
-| Real-time | WebSockets (FastAPI's native support) |
+| Real-time | WebSockets (FastAPI's native support), authenticated by a 60-second single-purpose ticket |
 | Testing | pytest, pytest-cov, httpx / FastAPI TestClient, fakeredis |
 | Containerization | Docker, docker-compose |
 | CI/CD | GitHub Actions |
@@ -318,6 +318,7 @@ instance before running migrations.
 | POST | `/auth/refresh` | Exchange a refresh token for a new token pair | Public |
 | POST | `/auth/change-password` | Change the current user's password | Required |
 | POST | `/auth/logout` | Record a logout event | Required |
+| POST | `/auth/ws-ticket` | Mint a short-lived WebSocket-only ticket (`type: "ws"`, 60 s) for the notification socket | Required |
 | GET | `/users/me` | Get current user's profile | Required |
 | PUT | `/users/me` | Update current user's profile | Required |
 | DELETE | `/users/{id}` | Delete a user | Admin |
@@ -340,7 +341,7 @@ instance before running migrations.
 | GET | `/notifications` | List the current user's notifications (`unread_only` filter) | Required |
 | POST | `/notifications/{id}/read` | Mark one notification as read | Owner |
 | POST | `/notifications/read-all` | Mark all of the current user's notifications as read | Required |
-| WS | `/ws/notifications?token=...` | Live push of new notifications (delivers unread backlog on connect) | Required (token as query param) |
+| WS | `/ws/notifications?token=...` | Live push of new notifications (delivers unread backlog on connect) | Required — a **WS ticket** from `/auth/ws-ticket`, not an access token (see "Security posture") |
 | POST | `/projects/{id}/export` | Queue an async CSV export of a project's issues (Celery) — `202 Accepted` | Required, rate-limited (5/min/user) |
 | GET | `/export-jobs/{id}` | Poll export job status (`pending`/`running`/`completed`/`failed`) | Requester/Owner/Admin |
 | GET | `/export-jobs/{id}/download` | Download the completed CSV | Requester/Owner/Admin |
@@ -348,6 +349,72 @@ instance before running migrations.
 
 Full interactive documentation (Swagger UI) is available at `/docs` once the app is
 running, and the raw OpenAPI schema at `/openapi.json`.
+
+### Security posture (Day-7 remediation)
+
+Findings are recorded with severity and evidence in the portfolio audit's
+security register; everything rated HIGH or above for this repo is fixed here.
+
+1. **The dependency scan now gates the build.** It ran `pip-audit --desc || true`
+   *and* carried `continue-on-error: true`, so the last green build before the
+   change printed "Found 37 known vulnerabilities in 5 packages" and reported
+   `success`. The pins are now clean — `No known vulnerabilities found`, verified
+   against both the installed environment and `pip-audit -r requirements.txt` —
+   and only then were the escape hatches removed. Zero waivers; the workflow
+   comment states the rule for any future unfixable advisory (explicit
+   `--ignore-vuln <ID>` with a reason and a re-review date).
+2. **python-jose is gone; the JWT library is PyJWT 2.15.1.** python-jose 3.3.0
+   carried PYSEC-2024-232/233 (fixed in 3.4.0) and PYSEC-2025-185, which has
+   **no published fix**, and the project is effectively unmaintained; it also
+   pulled in `ecdsa`, which has an unfixed advisory of its own. Four modules used
+   it through two calls and one exception type, so the migration is exact, and
+   tests assert that token expiry and wrong-type rejection still behave
+   identically.
+3. **The WebSocket no longer accepts an access token** (finding S9). Browsers
+   cannot set an `Authorization` header on a WS handshake, so the credential has
+   to ride in the query string — which nginx's `$request`, most load balancers
+   and browser history log by default. (This app's own access log records
+   `request.url.path` only, so the leak was never local; it was everything in
+   front.) Clients now call `POST /auth/ws-ticket` and pass a 60-second,
+   `type: "ws"` ticket that every REST dependency rejects, so a ticket found in
+   a log line can open a notification socket and do nothing else. 13 tests pin
+   both directions: the socket rejects access, refresh, expired, mis-signed and
+   orphan tickets, and REST endpoints reject a ticket.
+4. **CORS can no longer be configured unsafely** (`app/core/cors.py`, finding
+   S7). `CORS_ORIGINS` defaulted to `*` with a hardcoded
+   `allow_credentials=True`; in that combination Starlette echoes the caller's
+   `Origin` rather than sending `*`, trusting every website for credentialed
+   cross-origin requests. A wildcard under `APP_ENV=production` is now a loud
+   startup failure, `allow_credentials` is derived rather than hardcoded, and an
+   unset value denies cross-origin access instead of allowing all. Rated MEDIUM,
+   not HIGH: this API uses Bearer tokens and never sets a cookie, so there was no
+   ambient credential for a malicious page to ride — a latent bug rather than an
+   exploited one.
+5. **`SECRET_KEY` must be at least 32 bytes in production** (finding S15).
+   Requiring the field (a Day-3 fix) stopped a *missing* secret; this stops a
+   *weak* one, which is the failure that survives a checklist because everything
+   appears to work. HS256 uses the secret directly as an HMAC key and RFC 7518
+   3.2 requires at least the hash output length; below that, a signature can be
+   brute-forced offline from one captured token. It fails hard in production and
+   warns loudly elsewhere — deliberately asymmetric, because this project is
+   deployed and an unconditional rule could take a live service down over a
+   development key. The CI compose-smoke secret was lengthened from 31 to 37
+   characters as a result.
+6. **Pins bumped and floated ones fixed** (findings S4, S10, S11, S13):
+   python-multipart 0.0.9 → 0.0.32, fastapi 0.115.0 → 0.142.2 (starlette 0.38.6
+   → 1.7.0), uvicorn → 0.54.0, pytest 8.3.3 → 9.1.1 with pytest-asyncio and
+   pytest-cov bumped to match, ruff 0.6.9 → 0.16.9, and `psycopg2-binary` pinned
+   exactly instead of `>=`. All 59 pre-existing tests passed on the new framework
+   before any application code was changed, which is why the bump is a separate
+   commit-worth of evidence from the behaviour changes.
+
+Not reachable here, stated so the counts are not over-claimed: the Starlette
+advisories concern `StaticFiles`/`FileResponse`, `request.url.hostname`, bare
+`HTTPEndpoint` and urlencoded form limits — none of which this app uses — and
+python-multipart's concern multipart file parsing, while no endpoint here accepts
+a file upload (`/auth/login` posts urlencoded form data, which is why the package
+is required at all). The `pytest` advisory was a dev dependency, never on the
+production request path.
 
 ## Running Tests
 
@@ -358,9 +425,23 @@ pytest --cov=app --cov-report=term-missing
 ```
 
 `backend/.coveragerc` omits `app/tests/` from measurement, so the reported
-percentage is production code only — **91%** (1303 statements, 119 missed) as of
-the Day-7 audit. Without that omission the suite scores its own test files and
-reports a flattering 94%; the difference is documented in `RESUME_NOTES.md`.
+percentage is production code only — **92%** (1344 statements, 104 missed) after
+the Day-7 security remediation, up from 91% (1303/119) before it, because the
+new CORS and config-validation modules are fully covered. Without that omission
+the suite scores its own test files and reports a flattering 94%; the difference
+is documented in `RESUME_NOTES.md`.
+
+**A flake this suite had, and the fix.** `app/utils/rate_limit.py` scopes every
+counter to a wall-clock window (`int(time.time()) // window_seconds`), so a test
+whose requests straddle a 60-second boundary splits its count across two windows
+and the request that should be throttled is allowed instead. It surfaced while
+the Day-7 tests were being added — the extra tests changed elapsed time enough
+to land `test_register_is_rate_limited` on a boundary — and it would eventually
+have failed a CI build for a reason unrelated to the code under test. The rate
+limit tests now pin the clock, and a new
+`test_window_rollover_resets_the_counter` advances it deliberately to assert the
+fixed-window behaviour the module's docstring describes (a burst of up to ~2x the
+limit across two adjacent windows) instead of leaving it to chance.
 
 Tests run against an isolated in-memory SQLite database (no live PostgreSQL/Redis
 required) and cover: registration, login (success + wrong password), JWT validation

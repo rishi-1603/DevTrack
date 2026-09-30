@@ -3,11 +3,13 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.rate_limit_dep import rate_limit_by_ip
+from app.core.security import create_ws_token
 from app.database.models import User
 from app.database.session import get_db
-from app.schemas.token import ChangePasswordRequest, RefreshTokenRequest, Token
+from app.schemas.token import ChangePasswordRequest, RefreshTokenRequest, Token, WsTicket
 from app.schemas.user import UserCreate, UserRead
 from app.services import auth_service
 
@@ -54,6 +56,30 @@ def change_password(
 ) -> None:
     """Change the current user's password."""
     auth_service.change_password(db, current_user, payload.current_password, payload.new_password)
+
+
+@router.post("/ws-ticket", response_model=WsTicket)
+def ws_ticket(current_user: User = Depends(get_current_user)) -> WsTicket:
+    """Mint a short-lived WebSocket-only ticket for the authenticated user.
+
+    Added in the Day-7 security remediation (finding S9). The notification
+    socket has to authenticate through a query parameter, because browsers
+    cannot set headers on a WebSocket handshake, and query parameters get
+    logged. Handing out a dedicated credential for that path means what lands
+    in a log line is a 60-second ticket that no REST endpoint accepts, rather
+    than the user's full-scope access token.
+
+    To be precise about the exposure, since precision is the whole point: this
+    app's own access log records `request.url.path` only (see the
+    `access_log_middleware` in `app/main.py`), so it never contained the token.
+    What does log query strings by default is everything in front of the app --
+    nginx's `$request`, most load balancers, and browser history -- which is
+    where the credential was actually landing.
+    """
+    return WsTicket(
+        ticket=create_ws_token(str(current_user.id)),
+        expires_in=settings.WS_TOKEN_EXPIRE_SECONDS,
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

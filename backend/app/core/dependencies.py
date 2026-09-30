@@ -1,7 +1,7 @@
 """Shared FastAPI dependencies: DB session, current user, RBAC guards."""
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
+from jwt.exceptions import PyJWTError
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_token
@@ -19,7 +19,7 @@ def get_current_user(
     """Decode the bearer token, validate it is an access token, and load the user."""
     try:
         payload = decode_token(token)
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise InvalidTokenException("Could not validate credentials.") from exc
 
     if payload.get("type") != "access":

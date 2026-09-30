@@ -32,15 +32,30 @@ jobs:
         run: ruff check app
 
       - name: Security scan (pip-audit)
-        # Scans installed dependencies against the OSV vulnerability
-        # database. continue-on-error: a fresher-project pipeline should
-        # surface known-vulnerable pins for a human to triage, not
-        # silently block every push on a transitive dependency's CVE that
-        # may not even be reachable from this app's code paths.
+        # Day-7 remediation (finding S3): this used to be
+        #   pip-audit --desc || true
+        # with continue-on-error -- non-blocking twice over, so the last green
+        # build before the change printed "Found 37 known vulnerabilities in 5
+        # packages" and still reported success. The old reasoning in this comment
+        # ("a transitive CVE may not be reachable") was sound as far as it went,
+        # but the conclusion was wrong: unreachable advisories are handled by a
+        # visible per-ID waiver, not by disabling the gate for everything.
+        #
+        # The pins are now clean (python-jose -> PyJWT, python-multipart 0.0.9 ->
+        # 0.0.32, fastapi 0.115.0 -> 0.142.2 taking starlette 0.38.6 -> 1.7.0,
+        # pytest 8.3.3 -> 9.1.1, psycopg2-binary pinned exactly), verified with
+        # `pip-audit` on the installed environment and on
+        # `pip-audit -r requirements.txt`: "No known vulnerabilities found", zero
+        # waivers.
+        #
+        # If a future advisory has no available fix, do NOT re-add `|| true`. Use
+        # `--ignore-vuln <ID>` with a comment saying why it is not reachable from
+        # this app's code paths and the date to re-review, so the waiver is
+        # visible here rather than buried in a log nobody reads.
         run: |
+          python -m pip install --upgrade pip
           pip install -q pip-audit
-          pip-audit --desc || true
-        continue-on-error: true
+          pip-audit --desc
 
       - name: Run unit/integration tests (isolated SQLite, no external services)
         run: pytest app/tests/ --cov=app --cov-report=term-missing
@@ -326,7 +341,12 @@ jobs:
       # interpolate (`${SECRET_KEY:?...}`). Throwaway value -- nothing here is
       # a real credential, and the app deliberately has no insecure fallback so
       # that a missing secret is loud rather than silently "working".
-      SECRET_KEY: ci-smoke-only-not-a-real-secret
+      #
+      # Lengthened from 31 to 37 characters by the Day-7 remediation (finding
+      # S15): Settings now enforces the RFC 7518 3.2 minimum of 32 bytes for an
+      # HS256 key, so the previous value would have failed this job's own
+      # startup. Still a throwaway -- it is a length requirement, not a secret.
+      SECRET_KEY: ci-smoke-only-not-a-real-secret-value
 
     steps:
       - name: Checkout code

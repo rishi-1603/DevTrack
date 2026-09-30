@@ -1,5 +1,5 @@
 """Business logic for authentication: register, login, refresh, change password."""
-from jose import JWTError
+from jwt.exceptions import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -68,7 +68,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> Token:
     """Validate a refresh token and issue a new access/refresh token pair."""
     try:
         payload = decode_token(refresh_token)
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise InvalidTokenException("Invalid or expired refresh token.") from exc
 
     if payload.get("type") != "refresh":
