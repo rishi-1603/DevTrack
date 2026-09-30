@@ -357,6 +357,11 @@ source .venv/bin/activate
 pytest --cov=app --cov-report=term-missing
 ```
 
+`backend/.coveragerc` omits `app/tests/` from measurement, so the reported
+percentage is production code only — **91%** (1303 statements, 119 missed) as of
+the Day-7 audit. Without that omission the suite scores its own test files and
+reports a flattering 94%; the difference is documented in `RESUME_NOTES.md`.
+
 Tests run against an isolated in-memory SQLite database (no live PostgreSQL/Redis
 required) and cover: registration, login (success + wrong password), JWT validation
 (missing/invalid/wrong-type tokens), project CRUD, issue CRUD + workflow transitions,

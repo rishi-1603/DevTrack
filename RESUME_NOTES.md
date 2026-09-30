@@ -1,8 +1,8 @@
 # DevTrack — Resume & LinkedIn Bullet Points
 
-*Rewritten Day 7. Every number below is measured, not remembered: test count and
-coverage come from the CI `test` job's `pytest app/tests/ --cov=app
---cov-report=term-missing` output (run 36614453421 on commit `d6e21d3`), and
+*Rewritten Day 7, corrected again the same day. Every number below is measured,
+not remembered: test count and coverage come from the CI `test` job's `pytest
+app/tests/ --cov=app --cov-report=term-missing` output, and
 the deployment claim was re-checked live on 2026-09-30. The previous version of
 this file said "91% coverage across 29 pytest cases"; the measured values at
 that time were 94% across 59. Understating is as wrong as overstating — an
@@ -52,18 +52,25 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 59 tests at
 | Claim | Value | Source |
 |---|---|---|
 | pytest cases | 59 | CI `test` job, `59 passed in 49.09s` |
-| Statement coverage | 94% | same job: `TOTAL 2020 stmts, 120 missed, 94%` |
-| Modules at 100% | 37 of 57 | same coverage table |
+| Statement coverage (production code) | 91% | `--cov=app` with `.coveragerc` omitting `app/tests/`: 1303 stmts, 119 missed |
 | Migrations | 4 (+ round-trip) | `migrations/versions/0001..0004`; CI downgrades and re-upgrades them |
 | Compose services | 5 | `backend/docker-compose.yml`: api, worker, migrate, db, redis |
 | Live deployment | HTTP 200 | checked by hand on 2026-09-30, cited above |
 
-Coverage is measured **only** in the isolated-SQLite unit job. The two
-lowest-covered modules — `services/dashboard_service.py` (33%) and
-`utils/cache.py` (33%) — are the Redis caching layer, whose real paths are
-exercised by the `real-infra-smoke-test` job, which runs against a live Redis
-but does not measure coverage. So 94% understates what is actually tested;
-say that only if asked, and say it with this explanation.
+Two methodology notes, because a coverage percentage without them is a trap:
+
+1. **The 94% this file quoted earlier in Day 7 was measured including the test
+   files themselves** — `app/tests/` lives inside the package being measured,
+   so the suite was scoring its own tests. A `.coveragerc` added the same day
+   omits them; the production-only figure is **91%** (1303 statements, 119
+   missed). Amusingly, 91% is also what the *original* pre-audit resume claimed
+   — right number, wrong provenance, since nothing measured it then either.
+2. Coverage is measured **only** in the isolated-SQLite unit job. The two
+   lowest-covered modules — `services/dashboard_service.py` (33%) and
+   `utils/cache.py` (33%) — are the Redis caching layer, whose real paths are
+   exercised by the `real-infra-smoke-test` job against a live Redis without
+   measuring coverage. So 91% understates what is actually tested; say that
+   only if asked, and say it with this explanation.
 
 ## Interview prep — questions to be ready for
 
