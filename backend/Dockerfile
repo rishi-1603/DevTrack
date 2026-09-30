@@ -22,7 +22,16 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# The base image ships its own pip (25.0.1 here), which no pin in
+# requirements.txt can reach and no scan of the CI runner's Python can see.
+# Measured by scanning this image from the inside in CI: 7 advisories
+# (PYSEC-2026-1795, -1796, -196, -2875, -2876, -3721), several of them about how
+# pip extracts wheels and tarballs -- i.e. they apply to the very next command,
+# which resolves dependencies from the network at build time. Python 3.12's
+# ensurepip does not bundle setuptools, so unlike the 3.11-based CertiFake image
+# there is nothing else in here to upgrade.
+RUN pip install --no-cache-dir --upgrade "pip>=26.2.0"
+RUN pip install --no-cache-dir -r requirements.txt .
 
 COPY . .
 
