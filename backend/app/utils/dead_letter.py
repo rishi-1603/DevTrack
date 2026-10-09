@@ -22,10 +22,16 @@ a finished failure into a crashed worker. Same philosophy as
 app/utils/cache.py and app/utils/rate_limit.py: a Redis outage degrades this
 app, it does not take it down.
 
-Retention: the list is capped with LTRIM so an unreplayed backlog cannot
-grow without bound in a long-running deployment. Capped means old entries
-are evicted -- acceptable precisely because Postgres still holds every
-failed job permanently.
+Retention has two ends deliberately, because capping alone is not enough:
+the list is capped with LTRIM so an unreplayed backlog cannot grow without
+bound in a long-running deployment, and the whole key carries a sliding TTL
+refreshed by each push. Without the TTL, a list whose entry is three months
+old still reads as "currently failing" -- the failure count and the top
+entry are the two things an operator looks at first, and neither says how
+old it is. With it, the list disappears once exports have been healthy for
+`DEAD_LETTER_TTL_SECONDS`, and the permanent record stays in Postgres where
+it belongs. Deleting the key outright (an operator clearing the backlog
+after replaying it) is `clear_dead_letters()`.
 """
 import json
 from datetime import datetime, timezone
@@ -38,6 +44,9 @@ from app.core.logging import get_logger
 logger = get_logger("dead_letter")
 
 DEAD_LETTER_KEY = "devtrack:dead_letter:export_jobs"
+# Sliding: refreshed on every push, so "no dead letters for a week" empties the
+# list and an old backlog cannot masquerade as a current one.
+DEAD_LETTER_TTL_SECONDS = 7 * 24 * 60 * 60
 MAX_DEAD_LETTERS = 500
 
 _client: redis.Redis | None = None
@@ -73,6 +82,7 @@ def push_dead_letter(payload: dict) -> bool:
         pipe = client.pipeline()
         pipe.lpush(DEAD_LETTER_KEY, json.dumps(entry, default=str))
         pipe.ltrim(DEAD_LETTER_KEY, 0, MAX_DEAD_LETTERS - 1)
+        pipe.expire(DEAD_LETTER_KEY, DEAD_LETTER_TTL_SECONDS)
         pipe.execute()
         return True
     except (redis.exceptions.RedisError, ConnectionError, OSError, TypeError, ValueError) as exc:
@@ -115,3 +125,18 @@ def dead_letter_count() -> int:
     except (redis.exceptions.RedisError, ConnectionError, OSError, TypeError, ValueError) as exc:
         logger.warning("Redis unavailable while counting dead letters: %s", exc)
         return -1
+
+
+def clear_dead_letters() -> bool:
+    """Drop the whole list, e.g. after replaying it. True if Redis had it.
+
+    The explicit invalidation path for this key: the LTRIM cap evicts old
+    entries and the TTL expires the list, but neither can be triggered by an
+    operator who has just replayed the backlog and wants the list to read
+    empty. The permanent per-job record in Postgres is untouched either way.
+    """
+    try:
+        return bool(_get_client().delete(DEAD_LETTER_KEY))
+    except (redis.exceptions.RedisError, ConnectionError, OSError) as exc:
+        logger.warning("Redis unavailable while clearing dead letters: %s", exc)
+        return False

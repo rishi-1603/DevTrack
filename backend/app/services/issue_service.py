@@ -1,10 +1,11 @@
 """Business logic for Issue resources, including workflow transitions."""
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.database.models import ActivityLog, Issue, IssueStatus, NotificationType, Project, User, UserRole
 from app.schemas.issue import IssueCreate, IssueUpdate
+from app.services.dashboard_service import invalidate_dashboard_cache_for_project
 from app.services.realtime import notify_user
 from app.utils.exceptions import BadRequestException, NotFoundException, PermissionDeniedException
 
@@ -49,6 +50,7 @@ def create_issue(db: Session, issue_in: IssueCreate, user: User) -> Issue:
     db.add(ActivityLog(user_id=user.id, action=f"created issue '{issue.title}'"))
     db.commit()
     logger.info("Issue created: %s (id=%s) by user_id=%s", issue.title, issue.id, user.id)
+    invalidate_dashboard_cache_for_project(db, issue.project_id)
     return issue
 
 
@@ -76,6 +78,10 @@ def list_issues(
     if search:
         stmt = stmt.where(Issue.title.ilike(f"%{search}%"))
     stmt = stmt.order_by(Issue.created_at.desc())
+    # IssueRead serialises `assignee`, and `assignee` is a lazy relationship: without
+    # this each issue in the response triggers its own SELECT (measured Day 7: 25 rows
+    # -> 25 extra queries). One extra query for the whole page instead.
+    stmt = stmt.options(selectinload(Issue.assignee))
     return list(db.scalars(stmt).all())
 
 
@@ -91,6 +97,7 @@ def update_issue(db: Session, issue_id: int, issue_in: IssueUpdate, user: User) 
     db.commit()
     db.refresh(issue)
     logger.info("Issue updated: id=%s by user_id=%s", issue.id, user.id)
+    invalidate_dashboard_cache_for_project(db, issue.project_id)
     return issue
 
 
@@ -98,9 +105,11 @@ def delete_issue(db: Session, issue_id: int, user: User) -> None:
     issue = get_issue(db, issue_id)
     _ensure_can_modify_issue(issue, user)
 
+    project_id = issue.project_id          # captured before the row disappears
     db.delete(issue)
     db.commit()
     logger.info("Issue deleted: id=%s by user_id=%s", issue_id, user.id)
+    invalidate_dashboard_cache_for_project(db, project_id)
 
 
 def assign_issue(db: Session, issue_id: int, assignee_id: int, user: User) -> Issue:
@@ -149,6 +158,7 @@ def change_issue_status(db: Session, issue_id: int, new_status: IssueStatus, use
     db.add(ActivityLog(user_id=user.id, action=f"changed issue '{issue.title}' status to {new_status.value}"))
     db.commit()
     logger.info("Issue id=%s status changed to %s by user_id=%s", issue.id, new_status.value, user.id)
+    invalidate_dashboard_cache_for_project(db, issue.project_id)
 
     # Notify the assignee (if any, and if someone else made the change).
     if issue.assigned_to and issue.assigned_to != user.id:

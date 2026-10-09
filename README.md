@@ -425,11 +425,12 @@ pytest --cov=app --cov-report=term-missing
 ```
 
 `backend/.coveragerc` omits `app/tests/` from measurement, so the reported
-percentage is production code only — **92%** (1344 statements, 104 missed) after
-the Day-7 security remediation, up from 91% (1303/119) before it, because the
-new CORS and config-validation modules are fully covered. Without that omission
-the suite scores its own test files and reports a flattering 94%; the difference
-is documented in `RESUME_NOTES.md`.
+percentage is production code only — **97%** (1374 statements, 44 missed),
+measured 2026-10-10, up from the 92% (1344/104) recorded earlier in this
+engagement as the later test passes landed. Without that omission the suite
+scores its own test files and reports a flattering 98% (2781/57) — which is
+exactly why the omit exists; the difference is documented in
+`RESUME_NOTES.md`.
 
 **A flake this suite had, and the fix.** `app/utils/rate_limit.py` scopes every
 counter to a wall-clock window (`int(time.time()) // window_seconds`), so a test

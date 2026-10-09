@@ -5,13 +5,37 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.database.models import Issue, IssuePriority, IssueStatus, Project, User
-from app.utils.cache import get_cache, set_cache
+from app.utils.cache import delete_cache, get_cache, set_cache
 
 logger = get_logger("dashboard_service")
 
 
 def _cache_key(user_id: int) -> str:
     return f"dashboard:summary:{user_id}"
+
+
+def invalidate_dashboard_cache(user_id: int) -> None:
+    """Drop a user's cached summary after something changed their counts.
+
+    WHY THIS EXISTS: until Day 7 the cache was written with a 60-second TTL and
+    deleted by nothing at all -- `delete_cache` was defined in utils/cache.py and
+    imported nowhere. So creating an issue left the dashboard showing the old
+    counts for up to a minute, which is the first thing anyone notices about a
+    cache and the first question an interviewer asks about one ("how do you
+    invalidate it?"). Invalidation is exact rather than blanket: the summary is
+    per-owner, so only the owner of the project that changed loses their entry.
+
+    Deliberately NOT invalidated: assignment changes, comments and notification
+    reads, because none of them appear in the summary (see _compute_summary).
+    """
+    delete_cache(_cache_key(user_id))
+
+
+def invalidate_dashboard_cache_for_project(db: Session, project_id: int) -> None:
+    """Same, when the caller knows the project but not its owner."""
+    owner_id = db.scalar(select(Project.owner_id).where(Project.id == project_id))
+    if owner_id is not None:
+        invalidate_dashboard_cache(owner_id)
 
 
 def _compute_summary(db: Session, user: User) -> dict:

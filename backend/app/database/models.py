@@ -2,7 +2,7 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base
@@ -79,7 +79,7 @@ class Project(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     owner: Mapped["User"] = relationship("User", back_populates="owned_projects", foreign_keys=[owner_id])
@@ -98,16 +98,22 @@ class Issue(Base):
         Enum(IssuePriority, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
         default=IssuePriority.MEDIUM,
         nullable=False,
+        index=True,
     )
     status: Mapped[IssueStatus] = mapped_column(
         Enum(IssueStatus, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
         default=IssueStatus.TODO,
         nullable=False,
+        index=True,
     )
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
-    assigned_to: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    # project_id / status / priority / created_at are all filters or the sort key in
+    # issue_service.list_issues, and all four were sequential scans before migration
+    # 0005 (Day 7, EXPLAIN ANALYZE against 50k rows: 5.1 ms / 7.2 ms / 6.5 ms / 9.0 ms).
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
+    assigned_to: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow,
+                                                  nullable=False, index=True)
 
     project: Mapped["Project"] = relationship("Project", back_populates="issues")
     assignee: Mapped["User | None"] = relationship(
@@ -120,10 +126,13 @@ class Issue(Base):
 
 class Comment(Base):
     __tablename__ = "comments"
+    # The comment thread is always "WHERE issue_id = ? ORDER BY created_at ASC"
+    # (comment_service.list_comments); one composite index serves both halves.
+    __table_args__ = (Index("ix_comments_issue_id_created_at", "issue_id", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     issue_id: Mapped[int] = mapped_column(ForeignKey("issues.id"), nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     comment: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
@@ -152,6 +161,9 @@ class Notification(Base):
     """
 
     __tablename__ = "notifications"
+    # The backlog query filters on user_id and sorts by created_at (day7: 1.4 ms at 50k
+    # rows with the single-column index, most of it the sort this replaces).
+    __table_args__ = (Index("ix_notifications_user_id_created_at", "user_id", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
@@ -181,6 +193,10 @@ class ExportJob(Base):
     but would need to move to shared/object storage (e.g. S3) before this
     could run with more than one worker replica.
     """
+    # export_tasks.reap_stale_jobs filters status IN (...) AND created_at < cutoff;
+    # one composite serves the sweep (day7: 0.77 ms seq scan at 5k rows, growing).
+    __table_args__ = (Index("ix_export_jobs_status_created_at", "status", "created_at"),)
+
 
     __tablename__ = "export_jobs"
 

@@ -1,6 +1,6 @@
 """Business logic for Comment resources."""
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.database.models import Comment, Issue, NotificationType, User, UserRole
@@ -42,6 +42,8 @@ def add_comment(db: Session, issue_id: int, comment_in: CommentCreate, user: Use
 def list_comments(db: Session, issue_id: int) -> list[Comment]:
     _get_issue_or_404(db, issue_id)
     stmt = select(Comment).where(Comment.issue_id == issue_id).order_by(Comment.created_at.asc())
+    # CommentRead serialises `user` -- eager-load it rather than one SELECT per comment.
+    stmt = stmt.options(selectinload(Comment.user))
     return list(db.scalars(stmt).all())
 
 

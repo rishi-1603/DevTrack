@@ -7,8 +7,9 @@ the deployment claim was re-checked live on 2026-09-30. The previous version of
 this file said "91% coverage across 29 pytest cases"; the measured values at
 that time were 94% across 59 — and the 94% was itself measured wrong, counting
 the test files as covered code. Understating is as wrong as overstating. After
-the Day-7 security remediation the measured values are **110 cases at 92%
-production-code coverage**, and an interviewer who runs the suite gets 110.*
+the Day-7 security remediation and the Day-7 database/caching tests the measured
+values are **173 cases at 97% production-code coverage** (2026-10-10), and an
+interviewer who runs the suite gets 173.*
 
 ## Resume bullet points (pick 2-3 based on space)
 
@@ -17,7 +18,7 @@ production-code coverage**, and an interviewer who runs the suite gets 110.*
   control (ADMIN/DEVELOPER enforced in dependencies *and* re-checked at the
   service layer), full CRUD for projects/issues/comments, notifications, and a
   WebSocket realtime channel authenticated by short-lived single-purpose
-  tickets; 110 pytest cases at 92% production-code coverage in CI, with a
+  tickets; 173 pytest cases at 97% production-code coverage in CI, with a
   dependency audit that is clean and blocking.
 
 - Implemented asynchronous CSV export as a Celery task over Redis: request
@@ -41,8 +42,8 @@ production-code coverage**, and an interviewer who runs the suite gets 110.*
 ## One-liner (LinkedIn / portfolio card)
 
 DevTrack — a Jira/Trello-style issue-tracker backend in FastAPI + PostgreSQL:
-JWT auth with roles, async Celery CSV export, WebSocket updates, 110 tests at
-92% production-code coverage, Docker Compose stack whose boot is asserted in CI.
+JWT auth with roles, async Celery CSV export, WebSocket updates, 173 tests at
+97% production-code coverage, Docker Compose stack whose boot is asserted in CI.
 
 ## Links to have ready
 
@@ -55,8 +56,8 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 110 tests at
 
 | Claim | Value | Source |
 |---|---|---|
-| pytest cases | 110 | CI `test` job (59 before the Day-7 remediation added CORS, WS-ticket and key-strength tests) |
-| Statement coverage (production code) | 92% | `--cov=app` with `.coveragerc` omitting `app/tests/`: 1344 stmts, 104 missed |
+| pytest cases | 173 (2 xfailed) | `pytest app/tests/` (59 before the Day-7 remediation; 173 after the Day-7 DB/caching tests) |
+| Statement coverage (production code) | 97% | `--cov=app` with `.coveragerc` omitting `app/tests/`: 1374 stmts, 44 missed (measured 2026-10-10) |
 | Dependency audit | clean, and blocking | `pip-audit` on the pinned set: `No known vulnerabilities found`; was 37 across 5 packages on a green build, because the CI step had both `\|\| true` and `continue-on-error` |
 | JWT library | PyJWT 2.15.1 | `app/core/security.py`; python-jose removed — unmaintained, PYSEC-2025-185 unfixed |
 | WebSocket credential | 60 s ticket, `type: "ws"` | `POST /auth/ws-ticket`; rejected by every REST dependency, and access/refresh tokens are rejected by the socket |
@@ -64,7 +65,7 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 110 tests at
 | Signing-key floor | 32 bytes in production | `app/core/config.py` model validator; warns outside production so a dev key cannot take the live service down |
 | Migrations | 4 (+ round-trip) | `migrations/versions/0001..0004`; CI downgrades and re-upgrades them |
 | Compose services | 5 | `backend/docker-compose.yml`: api, worker, migrate, db, redis |
-| Live deployment | HTTP 200 | checked by hand on 2026-09-30, cited above |
+| Live deployment | Live, verified 2026-10-10 | Render free tier, commit `1e1e964` (GitHub main). Smoke flow register → login → project → issue returns 201/200 on the live URL. The Day-7 changes are not yet pushed. See `portfolio-strategy/verification/live-check-2026-10-10.md`. |
 
 Two methodology notes, because a coverage percentage without them is a trap:
 
@@ -72,16 +73,16 @@ Two methodology notes, because a coverage percentage without them is a trap:
    files themselves** — `app/tests/` lives inside the package being measured,
    so the suite was scoring its own tests. A `.coveragerc` added the same day
    omits them; the production-only figure was **91%** (1303 statements, 119
-   missed), and is **92%** (1344/104) after the Day-7 remediation added the
-   CORS and config-validation modules, which are fully covered. Amusingly, 91%
+   missed), and is **97%** (1374/44) after the Day-7 tests were added (measured
+   2026-10-10). Amusingly, 91%
    is also what the *original* pre-audit resume claimed — right number, wrong
    provenance, since nothing measured it then either.
-2. Coverage is measured **only** in the isolated-SQLite unit job. The two
-   lowest-covered modules — `services/dashboard_service.py` (33%) and
-   `utils/cache.py` (33%) — are the Redis caching layer, whose real paths are
-   exercised by the `real-infra-smoke-test` job against a live Redis without
-   measuring coverage. So 92% understates what is actually tested; say that
-   only if asked, and say it with this explanation.
+2. Coverage is measured in the isolated-SQLite unit job. The Redis caching
+   layer (`utils/cache.py`, `utils/dead_letter.py`, `utils/rate_limit.py`) is
+   now covered by unit tests against fakeredis and degradation tests with a
+   dead Redis (cache 94%, dead_letter 98%, rate_limit 96%). Its real-Redis path
+   is still exercised by the `real-infra-smoke-test` job. Remaining uncovered
+   lines are the lazy `_get_client()` branches; 96% is the honest ceiling.
 
 ## Interview prep — questions to be ready for
 

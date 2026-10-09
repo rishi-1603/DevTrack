@@ -1,10 +1,11 @@
 """Business logic for Project resources."""
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.database.models import ActivityLog, Project, User, UserRole
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.services.dashboard_service import invalidate_dashboard_cache
 from app.utils.exceptions import NotFoundException, PermissionDeniedException
 
 logger = get_logger("project_service")
@@ -19,6 +20,7 @@ def create_project(db: Session, project_in: ProjectCreate, owner: User) -> Proje
     db.add(ActivityLog(user_id=owner.id, action=f"created project '{project.title}'"))
     db.commit()
     logger.info("Project created: %s (id=%s) by user_id=%s", project.title, project.id, owner.id)
+    invalidate_dashboard_cache(owner.id)
     return project
 
 
@@ -34,6 +36,9 @@ def list_projects(db: Session, search: str | None = None) -> list[Project]:
     if search:
         stmt = stmt.where(Project.title.ilike(f"%{search}%"))
     stmt = stmt.order_by(Project.created_at.desc())
+    # ProjectRead serialises `owner`; without eager loading that is one extra SELECT per
+    # project in the response (the same N+1 issue_service.list_issues had).
+    stmt = stmt.options(selectinload(Project.owner))
     return list(db.scalars(stmt).all())
 
 
@@ -61,6 +66,8 @@ def delete_project(db: Session, project_id: int, user: User) -> None:
     project = get_project(db, project_id)
     _ensure_can_modify(project, user)
 
+    owner_id = project.owner_id
     db.delete(project)
     db.commit()
     logger.info("Project deleted: id=%s by user_id=%s", project_id, user.id)
+    invalidate_dashboard_cache(owner_id)
