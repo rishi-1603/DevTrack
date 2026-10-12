@@ -1,7 +1,7 @@
 # DevTrack — Days 8–10 final QA report
 
 **Verification date:** 2026-10-12 (Asia/Calcutta / UTC evidence timestamps)  
-**Verified main commit:** `ee0fd120`  
+**Verified main commit:** `c0278fba`  
 **Repository:** https://github.com/rishi-1603/DevTrack
 
 This report records evidence, not assumptions. A green build alone is not used
@@ -24,7 +24,7 @@ clear `503` with a terminal failed job instead of an opaque `500`.
 | Core workflow | **PASS** | Live: register → login → project → issue → assign → status transitions → comment → persistence → filters → dashboard; see [live verification log](verification-live-2026-10-12.md) |
 | Critical automated tests | **PASS** | Local: **178 passed**, 0 xfail; 97% production coverage, 1,395 statements / 43 missed; ruff clean |
 | Security/dependencies | **PASS** | `pip-audit`: `No known vulnerabilities found`; tracked-file secret scan found no credential patterns; no tracked real `.env` files; production debug scan clean |
-| CI/CD | **PASS** | Main run [38229738047](https://github.com/rishi-1603/DevTrack/actions/runs/38229738047): test, config-validation, real-infra-smoke-test, Postgres migration round-trip, Docker build, and Compose smoke all passed |
+| CI/CD | **PASS** | Main run [38231641349](https://github.com/rishi-1603/DevTrack/actions/runs/38231641349): test, config-validation, real-infra-smoke-test, Postgres migration round-trip, Docker build, and Compose smoke all passed |
 | Live API liveness/docs | **PASS** | `https://devtrack-api-qhcp.onrender.com/health` and `/docs` returned HTTP 200 |
 | Live RBAC/error paths | **PASS** | Non-owner project/issue operations returned 403; missing/invalid token 401; malformed project 422; nonexistent issue 404 |
 | Live async export success | **PARTIAL** | CI Compose proves the successful worker path. Render post-fix check returned controlled 503 because Redis/Celery is not reachable; see `evidence/DevTrack/export-after-fix.txt` |
