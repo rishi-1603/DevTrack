@@ -63,3 +63,10 @@ class InvalidTokenException(AppException):
 class BadRequestException(AppException):
     status_code = 400
     detail = "Bad request."
+
+
+class ServiceUnavailableException(AppException):
+    """A required downstream service is unavailable right now."""
+
+    status_code = 503
+    detail = "A required service is temporarily unavailable. Please try again shortly."
