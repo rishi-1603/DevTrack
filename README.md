@@ -241,6 +241,9 @@ Supporting modules:
 Routers never touch the ORM directly, and services never touch `Request`/`Response`
 objects — this keeps business rules reusable and easy to unit test.
 
+**Diagram:** [verified architecture SVG](docs/architecture.svg) · **Live UI capture:**
+[Swagger screenshot](docs/screenshots/devtrack-live-api-docs.png)
+
 ## Database Schema
 
 | Table | Key Columns |
@@ -503,7 +506,12 @@ Try it: register a user via `POST /auth/register`, log in via `POST /auth/login`
 and watch `GET /dashboard/summary` update in real time.
 
 Note: the free-tier instance may take a few seconds to wake up on the first request
-after a period of inactivity.
+after a period of inactivity. Day-10 live verification passed the
+register → project → issue → assign → status → comment → filter → dashboard
+journey and the RBAC/error paths. The export endpoint returned the documented
+controlled `503` because this Render API service has no reachable Redis/Celery
+worker; the full successful export is verified by the CI Compose smoke test,
+not claimed as live on Render.
 
 ## License
 

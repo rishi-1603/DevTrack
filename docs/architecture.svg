@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">DevTrack production architecture</title>
+  <desc id="desc">FastAPI routers call services and SQLAlchemy persistence, with Redis for cache and rate limiting and Celery plus Redis for asynchronous CSV export.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52606d"/></marker>
+    <style>
+      .bg{fill:#f7fafc}.box{fill:#fff;stroke:#2d3748;stroke-width:2;rx:12}.support{fill:#edf6ff;stroke:#3182ce;stroke-width:2;rx:12}.queue{fill:#fffaf0;stroke:#d69e2e;stroke-width:2;rx:12}.title{font:700 26px system-ui,sans-serif;fill:#1a202c}.head{font:700 16px system-ui,sans-serif;fill:#1a202c}.body{font:14px system-ui,sans-serif;fill:#4a5568}.label{font:12px system-ui,sans-serif;fill:#718096}.line{stroke:#52606d;stroke-width:2;fill:none;marker-end:url(#arrow)}.dash{stroke:#718096;stroke-width:2;stroke-dasharray:7 6;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="720"/>
+  <text class="title" x="50" y="55">DevTrack — issue tracking backend</text>
+  <text class="body" x="50" y="82">Verified shape of the deployed FastAPI service and CI-booted Compose stack</text>
+
+  <rect class="box" x="55" y="135" width="190" height="100"/>
+  <text class="head" x="75" y="168">Client</text><text class="body" x="75" y="194">Swagger / React / curl</text><text class="body" x="75" y="216">Bearer JWT or WS ticket</text>
+  <rect class="box" x="300" y="115" width="250" height="145"/>
+  <text class="head" x="325" y="150">FastAPI API</text><text class="body" x="325" y="177">Routers: auth, projects,</text><text class="body" x="325" y="198">issues, comments, exports</text><text class="body" x="325" y="225">RBAC + Pydantic validation</text><text class="label" x="325" y="246">/health and /docs</text>
+  <rect class="support" x="665" y="115" width="220" height="145"/>
+  <text class="head" x="690" y="150">Service layer</text><text class="body" x="690" y="177">permission checks</text><text class="body" x="690" y="198">workflow + activity log</text><text class="body" x="690" y="219">cache invalidation</text><text class="label" x="690" y="244">testable business rules</text>
+  <rect class="box" x="970" y="115" width="180" height="145"/>
+  <text class="head" x="995" y="150">PostgreSQL</text><text class="body" x="995" y="178">users</text><text class="body" x="995" y="198">projects / issues</text><text class="body" x="995" y="218">comments / notifications</text><text class="body" x="995" y="238">export_jobs</text>
+  <path class="line" d="M245 185 H300"/><path class="line" d="M550 185 H665"/><path class="line" d="M885 185 H970"/>
+
+  <rect class="support" x="300" y="360" width="250" height="125"/>
+  <text class="head" x="325" y="395">Redis</text><text class="body" x="325" y="422">dashboard cache (TTL)</text><text class="body" x="325" y="443">login / write rate limits</text><text class="body" x="325" y="464">dead-letter list</text>
+  <path class="dash" d="M425 260 V360"/><text class="label" x="442" y="320">cache / limits</text>
+
+  <rect class="queue" x="665" y="360" width="220" height="125"/>
+  <text class="head" x="690" y="395">Celery + Redis</text><text class="body" x="690" y="422">async CSV export queue</text><text class="body" x="690" y="443">retry + backoff</text><text class="body" x="690" y="464">dead-letter on exhaustion</text>
+  <path class="dash" d="M790 260 V360"/><text class="label" x="805" y="320">enqueue</text>
+
+  <rect class="queue" x="970" y="360" width="180" height="125"/>
+  <text class="head" x="995" y="395">Worker</text><text class="body" x="995" y="422">generate CSV</text><text class="body" x="995" y="443">shared exports volume</text><text class="body" x="995" y="464">update ExportJob</text>
+  <path class="line" d="M885 422 H970"/><path class="dash" d="M1060 360 V260"/><text class="label" x="1074" y="320">DB session</text>
+
+  <rect class="support" x="55" y="570" width="1095" height="76"/>
+  <text class="head" x="80" y="602">CI evidence</text><text class="body" x="80" y="627">SQLite unit suite + real Postgres migration round-trip + real API/Redis/Celery smoke test + Docker Compose boot/smoke test; WebSocket and REST auth paths covered.</text>
+</svg>
