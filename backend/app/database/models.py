@@ -71,6 +71,10 @@ class User(Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user", cascade="all, delete-orphan"
     )
+    export_requests: Mapped[list["ExportJob"]] = relationship(
+        "ExportJob", back_populates="requested_by", foreign_keys="ExportJob.requested_by_id",
+        cascade="all, delete-orphan",
+    )
 
 
 class Project(Base):
@@ -85,6 +89,10 @@ class Project(Base):
     owner: Mapped["User"] = relationship("User", back_populates="owned_projects", foreign_keys=[owner_id])
     issues: Mapped[list["Issue"]] = relationship(
         "Issue", back_populates="project", cascade="all, delete-orphan"
+    )
+    export_jobs: Mapped[list["ExportJob"]] = relationship(
+        "ExportJob", back_populates="project", foreign_keys="ExportJob.project_id",
+        cascade="all, delete-orphan",
     )
 
 
@@ -121,6 +129,9 @@ class Issue(Base):
     )
     comments: Mapped[list["Comment"]] = relationship(
         "Comment", back_populates="issue", cascade="all, delete-orphan"
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="issue", cascade="all, delete-orphan"
     )
 
 
@@ -177,6 +188,7 @@ class Notification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="notifications")
+    issue: Mapped["Issue | None"] = relationship("Issue", back_populates="notifications")
 
 
 class ExportJob(Base):
@@ -221,6 +233,13 @@ class ExportJob(Base):
     # the API after the fact.
     attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="export_jobs", foreign_keys=[project_id]
+    )
+    requested_by: Mapped["User"] = relationship(
+        "User", back_populates="export_requests", foreign_keys=[requested_by_id]
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     project: Mapped["Project"] = relationship("Project")

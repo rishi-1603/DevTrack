@@ -242,7 +242,6 @@ def test_list_endpoints_ignore_limit_and_offset(client):
 # defects found by the audit, pinned while they are open
 # --------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="D1-2: nothing cascades notifications.issue_id / export_jobs.project_id")
 def test_deleting_a_project_whose_issue_has_a_notification_succeeds(client, project_and_issue):
     """Currently 500 (ForeignKeyViolation on notifications.issue_id). Expected:
     204, with the notification removed along with the issue it describes."""
@@ -251,7 +250,6 @@ def test_deleting_a_project_whose_issue_has_a_notification_succeeds(client, proj
     assert resp.status_code == 204, f"project delete with a notification attached -> {resp.status_code}"
 
 
-@pytest.mark.xfail(strict=True, reason="D3-1: DELETE /users/{id} reaches the same missing cascade")
 def test_admin_can_delete_a_user_who_owns_work_with_notifications(client, project_and_issue):
     """Offboarding is the operation most likely to run against real data, and it
     is the one that 500s today."""
