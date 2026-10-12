@@ -464,11 +464,13 @@ celery -A app.core.celery_app.celery_app worker --loglevel=info
 ```
 
 This requires a reachable Redis instance (same `REDIS_HOST`/`REDIS_PORT`
-the API uses for caching and rate limiting). Without a running worker, an
-export job will sit in `pending` forever — it degrades to "nothing happens
-past 202 Accepted," not a crash, but it also never completes, so this is a
-genuine operational dependency worth knowing about, not an implementation
-detail you can ignore.
+the API uses for caching and rate limiting). If the broker itself is
+unavailable, the API now records the job as `failed` and returns a safe `503`
+with an actionable message instead of an opaque `500` or a permanently pending
+row. If Redis accepts the message but no worker is running, the job can still
+remain `pending` until the startup stranded-job recovery threshold is reached;
+that is why the worker is a genuine operational dependency worth knowing about,
+not an implementation detail to ignore.
 
 ## Future Improvements
 

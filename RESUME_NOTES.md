@@ -8,8 +8,8 @@ this file said "91% coverage across 29 pytest cases"; the measured values at
 that time were 94% across 59 — and the 94% was itself measured wrong, counting
 the test files as covered code. Understating is as wrong as overstating. After
 the Day-7 security remediation and the Day-7 database/caching tests the measured
-values are **173 cases at 97% production-code coverage** (2026-10-10), and an
-interviewer who runs the suite gets 173.*
+values are **178 cases at 97% production-code coverage** (the Day-8 local
+verification), and an interviewer who runs the suite gets 178.*
 
 ## Resume bullet points (pick 2-3 based on space)
 
@@ -18,7 +18,7 @@ interviewer who runs the suite gets 173.*
   control (ADMIN/DEVELOPER enforced in dependencies *and* re-checked at the
   service layer), full CRUD for projects/issues/comments, notifications, and a
   WebSocket realtime channel authenticated by short-lived single-purpose
-  tickets; 173 pytest cases at 97% production-code coverage in CI, with a
+  tickets; 178 pytest cases at 97% production-code coverage in CI, with a
   dependency audit that is clean and blocking.
 
 - Implemented asynchronous CSV export as a Celery task over Redis: request
@@ -42,7 +42,7 @@ interviewer who runs the suite gets 173.*
 ## One-liner (LinkedIn / portfolio card)
 
 DevTrack — a Jira/Trello-style issue-tracker backend in FastAPI + PostgreSQL:
-JWT auth with roles, async Celery CSV export, WebSocket updates, 173 tests at
+JWT auth with roles, async Celery CSV export, WebSocket updates, 178 tests at
 97% production-code coverage, Docker Compose stack whose boot is asserted in CI.
 
 ## Links to have ready
@@ -56,8 +56,8 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 173 tests at
 
 | Claim | Value | Source |
 |---|---|---|
-| pytest cases | 173 (2 xfailed) | `pytest app/tests/` (59 before the Day-7 remediation; 173 after the Day-7 DB/caching tests) |
-| Statement coverage (production code) | 97% | `--cov=app` with `.coveragerc` omitting `app/tests/`: 1374 stmts, 44 missed (measured 2026-10-10) |
+| pytest cases | 178 (0 xfailed) | `pytest app/tests/` after the Day-8 cascade and broker-outage regressions; 1395 production statements, 43 missed (97%) |
+| Statement coverage (production code) | 97% | `--cov=app` with `.coveragerc` omitting `app/tests/`: 1395 stmts, 43 missed in the Day-8 run |
 | Dependency audit | clean, and blocking | `pip-audit` on the pinned set: `No known vulnerabilities found`; was 37 across 5 packages on a green build, because the CI step had both `\|\| true` and `continue-on-error` |
 | JWT library | PyJWT 2.15.1 | `app/core/security.py`; python-jose removed — unmaintained, PYSEC-2025-185 unfixed |
 | WebSocket credential | 60 s ticket, `type: "ws"` | `POST /auth/ws-ticket`; rejected by every REST dependency, and access/refresh tokens are rejected by the socket |
@@ -65,7 +65,7 @@ JWT auth with roles, async Celery CSV export, WebSocket updates, 173 tests at
 | Signing-key floor | 32 bytes in production | `app/core/config.py` model validator; warns outside production so a dev key cannot take the live service down |
 | Migrations | 4 (+ round-trip) | `migrations/versions/0001..0004`; CI downgrades and re-upgrades them |
 | Compose services | 5 | `backend/docker-compose.yml`: api, worker, migrate, db, redis |
-| Live deployment | Live, verified 2026-10-10 | Render free tier, commit `1e1e964` (GitHub main). Smoke flow register → login → project → issue returns 201/200 on the live URL. The Day-7 changes are not yet pushed. See `portfolio-strategy/verification/live-check-2026-10-10.md`. |
+| Live deployment | Live, verified 2026-10-10 | Render free tier, commit `1e1e964` (GitHub main). Smoke flow register → login → project → issue returns 201/200 on the live URL. The Day-8 cascade fix is merged to `main`; the live API workflow was re-run on 2026-10-12. The live export request also exposed a missing Redis/Celery deployment dependency; the code now returns a safe 503 and records a failed job instead of a generic 500. The Render service must be configured with a reachable Redis broker and worker before export can be marked live PASS. |
 
 Two methodology notes, because a coverage percentage without them is a trap:
 

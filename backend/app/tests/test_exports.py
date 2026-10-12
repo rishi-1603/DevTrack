@@ -72,6 +72,44 @@ def test_export_of_nonexistent_project_is_404(client):
     assert resp.status_code == 404
 
 
+def test_export_queue_outage_returns_503_and_marks_job_failed(client, monkeypatch):
+    """A live API without Redis must not turn an export request into an opaque
+    500 or leave a committed job pending forever.
+
+    This is the failure observed on the deployed Render API: the HTTP process
+    was healthy, but its Celery broker was not configured/reachable. The
+    endpoint now records a terminal status and returns a safe 503 while the
+    operator-facing transport exception stays in logs.
+    """
+    from app.database.models import ExportJob, ExportJobStatus
+
+    headers = auth_headers(client)
+    project_id = _create_project(client, headers, title="Broker outage project")
+
+    class BrokenTask:
+        @staticmethod
+        def delay(_job_id):
+            raise ConnectionError("redis://secret-host:6379/0 refused")
+
+    monkeypatch.setattr("app.tasks.export_tasks.generate_project_export", BrokenTask())
+    resp = client.post(f"/projects/{project_id}/export", headers=headers)
+    assert resp.status_code == 503
+    assert resp.json() == {
+        "error": "ServiceUnavailableException",
+        "detail": "The export worker queue is temporarily unavailable. Please try again shortly.",
+    }
+
+    db = TestingSessionLocal()
+    try:
+        job = db.query(ExportJob).filter(ExportJob.project_id == project_id).one()
+        assert job.status == ExportJobStatus.FAILED
+        assert job.attempts == 0
+        assert job.error_message == "The export worker queue is unavailable. Please try again shortly."
+        assert "secret-host" not in job.error_message
+    finally:
+        db.close()
+
+
 def test_other_user_cannot_view_or_download_someone_elses_export(client):
     owner_headers = auth_headers(client, email="owner@example.com")
     project_id = _create_project(client, owner_headers)

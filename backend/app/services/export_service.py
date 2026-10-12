@@ -1,10 +1,17 @@
 """Business logic for asynchronous project CSV exports."""
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.database.models import ExportJob, ExportJobStatus, User, UserRole
 from app.services.project_service import get_project
-from app.utils.exceptions import BadRequestException, NotFoundException, PermissionDeniedException
+from app.utils.exceptions import (
+    BadRequestException,
+    NotFoundException,
+    PermissionDeniedException,
+    ServiceUnavailableException,
+)
 
 logger = get_logger("export_service")
 
@@ -27,7 +34,36 @@ def request_export(db: Session, project_id: int, user: User) -> ExportJob:
 
     from app.tasks.export_tasks import generate_project_export
 
-    generate_project_export.delay(job.id)
+    try:
+        generate_project_export.delay(job.id)
+    except Exception as exc:  # noqa: BLE001 -- broker clients raise several transport-specific exceptions
+        # The API can be healthy while Redis/Celery is unavailable. Previously
+        # this escaped to the catch-all handler as a generic 500, even though
+        # the job row had already been committed and the client could not
+        # know whether to retry. Record a terminal, non-sensitive state and
+        # return an actionable 503 instead. The raw transport error is logged
+        # for operators, never sent to the caller.
+        logger.error(
+            "Export job id=%s could not be queued: %s: %s",
+            job.id,
+            type(exc).__name__,
+            exc,
+        )
+        db.rollback()
+        failed_job = db.get(ExportJob, job.id)
+        if failed_job is not None:
+            failed_job.status = ExportJobStatus.FAILED
+            failed_job.attempts = 0
+            failed_job.error_message = (
+                "The export worker queue is unavailable. Please try again shortly."
+            )
+            failed_job.completed_at = datetime.now(timezone.utc)
+            db.add(failed_job)
+            db.commit()
+        raise ServiceUnavailableException(
+            "The export worker queue is temporarily unavailable. Please try again shortly."
+        ) from exc
+
     logger.info("Export job id=%s queued for project_id=%s by user_id=%s", job.id, project_id, user.id)
 
     # Re-fetch rather than trust the in-memory `job` object: the task runs
