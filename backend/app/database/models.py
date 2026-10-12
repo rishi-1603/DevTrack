@@ -241,6 +241,3 @@ class ExportJob(Base):
         "User", back_populates="export_requests", foreign_keys=[requested_by_id]
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    project: Mapped["Project"] = relationship("Project")
-    requested_by: Mapped["User"] = relationship("User")
