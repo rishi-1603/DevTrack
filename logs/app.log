@@ -1,0 +1,876 @@
+2026-10-12 08:53:00,219 | INFO     | app.auth_service | New user registered: newuser@example.com (id=1)
+2026-10-12 08:53:00,532 | INFO     | app.auth_service | New user registered: dupe@example.com (id=1)
+2026-10-12 08:53:00,537 | INFO     | app.main | Handled error on POST /auth/register: A user with this email already exists.
+2026-10-12 08:53:00,813 | INFO     | app.auth_service | New user registered: loginok@example.com (id=1)
+2026-10-12 08:53:01,083 | INFO     | app.auth_service | User logged in: loginok@example.com (id=1)
+2026-10-12 08:53:01,369 | INFO     | app.auth_service | New user registered: wrongpass@example.com (id=1)
+2026-10-12 08:53:01,653 | WARNING  | app.auth_service | Failed login attempt for email=wrongpass@example.com
+2026-10-12 08:53:01,655 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:01,671 | INFO     | app.main | Handled error on GET /users/me: Could not validate credentials.
+2026-10-12 08:53:01,965 | INFO     | app.auth_service | New user registered: validtoken@example.com (id=1)
+2026-10-12 08:53:02,268 | INFO     | app.auth_service | User logged in: validtoken@example.com (id=1)
+2026-10-12 08:53:02,700 | INFO     | app.auth_service | New user registered: refresh@example.com (id=1)
+2026-10-12 08:53:03,047 | INFO     | app.auth_service | User logged in: refresh@example.com (id=1)
+2026-10-12 08:53:03,512 | INFO     | app.auth_service | New user registered: badrefresh@example.com (id=1)
+2026-10-12 08:53:03,815 | INFO     | app.auth_service | User logged in: badrefresh@example.com (id=1)
+2026-10-12 08:53:03,820 | INFO     | app.main | Handled error on POST /auth/refresh: Expected a refresh token.
+2026-10-12 08:53:04,097 | INFO     | app.auth_service | New user registered: changepw@example.com (id=1)
+2026-10-12 08:53:04,380 | INFO     | app.auth_service | User logged in: changepw@example.com (id=1)
+2026-10-12 08:53:04,961 | INFO     | app.auth_service | User changed password: changepw@example.com (id=1)
+2026-10-12 08:53:05,234 | WARNING  | app.auth_service | Failed login attempt for email=changepw@example.com
+2026-10-12 08:53:05,235 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:05,502 | INFO     | app.auth_service | User logged in: changepw@example.com (id=1)
+2026-10-12 08:53:05,511 | WARNING  | app.cache | Redis unavailable on GET any:key: simulated outage on get
+2026-10-12 08:53:05,517 | WARNING  | app.cache | Redis unavailable on SET any:key: simulated outage on set
+2026-10-12 08:53:05,517 | WARNING  | app.cache | Redis unavailable on DELETE any:key: simulated outage on delete
+2026-10-12 08:53:05,535 | WARNING  | app.rate_limit | Redis unavailable for rate limit check on ratelimit:register:ip:testclient: simulated outage on pipeline -- failing open
+2026-10-12 08:53:05,822 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:05,827 | WARNING  | app.rate_limit | Redis unavailable for rate limit check on ratelimit:login:ip:testclient: simulated outage on pipeline -- failing open
+2026-10-12 08:53:06,100 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:06,138 | WARNING  | app.cache | Redis unavailable on GET dashboard:summary:1: simulated outage on get
+2026-10-12 08:53:06,140 | WARNING  | app.cache | Redis unavailable on SET dashboard:summary:1: simulated outage on set
+2026-10-12 08:53:06,140 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:53:06,458 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:06,729 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:06,735 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:53:06,754 | WARNING  | app.rate_limit | Redis unavailable for rate limit check on login:1.2.3.4: simulated outage on pipeline -- failing open
+2026-10-12 08:53:06,765 | CRITICAL | app.dead_letter | Could not dead-letter job payload to Redis (ConnectionError: simulated outage on pipeline). The job is still marked failed in the database with its error message; only the replay-ready copy was lost.
+2026-10-12 08:53:06,770 | WARNING  | app.dead_letter | Redis unavailable while counting dead letters: simulated outage on llen
+2026-10-12 08:53:06,771 | WARNING  | app.dead_letter | Redis unavailable while reading dead letters: simulated outage on lrange
+2026-10-12 08:53:06,771 | WARNING  | app.dead_letter | Redis unavailable while clearing dead letters: simulated outage on delete
+2026-10-12 08:53:06,988 | ERROR    | app.main | Stranded export-job recovery skipped at startup: OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-12 08:53:06,988 | INFO     | app.main | DevTrack application startup complete.
+2026-10-12 08:53:07,275 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:07,548 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:07,558 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:07,574 | INFO     | app.project_service | Project created: Project 0 (id=2) by user_id=1
+2026-10-12 08:53:07,581 | INFO     | app.project_service | Project created: Project 1 (id=3) by user_id=1
+2026-10-12 08:53:07,588 | INFO     | app.project_service | Project created: Project 2 (id=4) by user_id=1
+2026-10-12 08:53:07,595 | INFO     | app.project_service | Project created: Project 3 (id=5) by user_id=1
+2026-10-12 08:53:07,602 | INFO     | app.project_service | Project created: Project 4 (id=6) by user_id=1
+2026-10-12 08:53:07,609 | INFO     | app.project_service | Project created: Project 5 (id=7) by user_id=1
+2026-10-12 08:53:07,892 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:08,164 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:08,172 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:08,186 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:08,331 | INFO     | app.issue_service | Issue created: Issue 0 (id=2) by user_id=1
+2026-10-12 08:53:08,344 | INFO     | app.issue_service | Issue created: Issue 1 (id=3) by user_id=1
+2026-10-12 08:53:08,359 | INFO     | app.issue_service | Issue created: Issue 2 (id=4) by user_id=1
+2026-10-12 08:53:08,370 | INFO     | app.issue_service | Issue created: Issue 3 (id=5) by user_id=1
+2026-10-12 08:53:08,383 | INFO     | app.issue_service | Issue created: Issue 4 (id=6) by user_id=1
+2026-10-12 08:53:08,396 | INFO     | app.issue_service | Issue created: Issue 5 (id=7) by user_id=1
+2026-10-12 08:53:08,406 | INFO     | app.issue_service | Issue created: Issue 6 (id=8) by user_id=1
+2026-10-12 08:53:08,729 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:09,000 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:09,013 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:09,023 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:09,039 | INFO     | app.issue_service | Issue created: Issue 0 (id=2) by user_id=1
+2026-10-12 08:53:09,049 | INFO     | app.issue_service | Issue created: Issue 1 (id=3) by user_id=1
+2026-10-12 08:53:09,058 | INFO     | app.issue_service | Issue created: Issue 2 (id=4) by user_id=1
+2026-10-12 08:53:09,067 | INFO     | app.issue_service | Issue created: Issue 3 (id=5) by user_id=1
+2026-10-12 08:53:09,076 | INFO     | app.issue_service | Issue created: Issue 4 (id=6) by user_id=1
+2026-10-12 08:53:09,085 | INFO     | app.issue_service | Issue created: Issue 5 (id=7) by user_id=1
+2026-10-12 08:53:09,094 | INFO     | app.issue_service | Issue created: Issue 6 (id=8) by user_id=1
+2026-10-12 08:53:09,104 | INFO     | app.issue_service | Issue created: Issue 7 (id=9) by user_id=1
+2026-10-12 08:53:09,114 | INFO     | app.issue_service | Issue created: Issue 8 (id=10) by user_id=1
+2026-10-12 08:53:09,395 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:09,668 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:09,677 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:09,686 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:09,696 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,713 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,721 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,729 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,737 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,745 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,753 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:09,760 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:10,044 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:10,326 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:10,629 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:10,899 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:10,909 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:10,919 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:10,929 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:10,939 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:53:10,948 | INFO     | app.project_service | Project created: Project 0 (id=2) by user_id=1
+2026-10-12 08:53:10,956 | INFO     | app.project_service | Project created: Project 1 (id=3) by user_id=1
+2026-10-12 08:53:10,963 | INFO     | app.project_service | Project created: Project 2 (id=4) by user_id=1
+2026-10-12 08:53:10,972 | INFO     | app.project_service | Project created: Project 3 (id=5) by user_id=1
+2026-10-12 08:53:10,983 | INFO     | app.project_service | Project created: Project 4 (id=6) by user_id=1
+2026-10-12 08:53:10,993 | INFO     | app.issue_service | Issue created: Issue 0 (id=3) by user_id=1
+2026-10-12 08:53:11,002 | INFO     | app.issue_service | Issue created: Issue 1 (id=4) by user_id=1
+2026-10-12 08:53:11,012 | INFO     | app.issue_service | Issue created: Issue 0 (id=5) by user_id=1
+2026-10-12 08:53:11,021 | INFO     | app.issue_service | Issue created: Issue 1 (id=6) by user_id=1
+2026-10-12 08:53:11,031 | INFO     | app.issue_service | Issue created: Issue 0 (id=7) by user_id=1
+2026-10-12 08:53:11,042 | INFO     | app.issue_service | Issue created: Issue 1 (id=8) by user_id=1
+2026-10-12 08:53:11,051 | INFO     | app.issue_service | Issue created: Issue 0 (id=9) by user_id=1
+2026-10-12 08:53:11,060 | INFO     | app.issue_service | Issue created: Issue 1 (id=10) by user_id=1
+2026-10-12 08:53:11,070 | INFO     | app.issue_service | Issue created: Issue 0 (id=11) by user_id=1
+2026-10-12 08:53:11,079 | INFO     | app.issue_service | Issue created: Issue 1 (id=12) by user_id=1
+2026-10-12 08:53:11,089 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:53:11,369 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:11,655 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:11,667 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:11,682 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:11,694 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:11,705 | INFO     | app.issue_service | Issue created: Issue 2 (id=3) by user_id=1
+2026-10-12 08:53:11,715 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:53:11,722 | INFO     | app.dashboard_service | Dashboard summary cache hit for user_id=1
+2026-10-12 08:53:12,069 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:12,359 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:12,372 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:12,387 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:12,404 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:12,420 | INFO     | app.issue_service | Issue created: Issue 2 (id=3) by user_id=1
+2026-10-12 08:53:12,755 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:13,037 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:13,053 | INFO     | app.project_service | Project created: Payments rewrite (id=1) by user_id=1
+2026-10-12 08:53:13,066 | INFO     | app.project_service | Project created: Mobile app (id=2) by user_id=1
+2026-10-12 08:53:13,371 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:13,664 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:13,673 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:13,684 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:13,694 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:13,988 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:14,257 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:14,265 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:14,274 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:14,283 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:14,294 | INFO     | app.issue_service | Issue id=1 status changed to in_progress by user_id=1
+2026-10-12 08:53:14,575 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:14,847 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:14,854 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:14,863 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:14,871 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:14,878 | INFO     | app.issue_service | Issue created: Low one (id=3) by user_id=1
+2026-10-12 08:53:15,157 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:15,430 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:15,440 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:15,449 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:15,457 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:15,465 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:15,472 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:15,755 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:16,022 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:16,030 | INFO     | app.project_service | Project created: Project 0 (id=1) by user_id=1
+2026-10-12 08:53:16,039 | INFO     | app.issue_service | Issue created: Issue 0 (id=1) by user_id=1
+2026-10-12 08:53:16,048 | INFO     | app.issue_service | Issue created: Issue 1 (id=2) by user_id=1
+2026-10-12 08:53:16,056 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:16,336 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:16,610 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:16,901 | INFO     | app.auth_service | New user registered: retry@example.com (id=1)
+2026-10-12 08:53:17,172 | INFO     | app.auth_service | User logged in: retry@example.com (id=1)
+2026-10-12 08:53:17,178 | INFO     | app.main | Handled error on POST /auth/register: A user with this email already exists.
+2026-10-12 08:53:17,185 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:17,193 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:17,279 | WARNING  | app.export_tasks | export job id=1 attempt 1/3 failed (OSError: simulated transient disk blip) -- retrying in 1.7s
+2026-10-12 08:53:17,283 | WARNING  | app.export_tasks | export job id=1 attempt 2/3 failed (OSError: simulated transient disk blip) -- retrying in 4.7s
+2026-10-12 08:53:17,289 | INFO     | app.export_tasks | export job id=1 completed: 1 rows -> /home/user/DevTrack/backend/app/tasks/../../exports/export_1.csv (attempt 3)
+2026-10-12 08:53:17,594 | INFO     | app.auth_service | New user registered: retry2@example.com (id=1)
+2026-10-12 08:53:17,871 | INFO     | app.auth_service | User logged in: retry2@example.com (id=1)
+2026-10-12 08:53:18,155 | INFO     | app.auth_service | New user registered: retry@example.com (id=2)
+2026-10-12 08:53:18,163 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:18,171 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:18,182 | WARNING  | app.export_tasks | export job id=1 attempt 1/3 failed (OSError: disk is genuinely full) -- retrying in 2.9s
+2026-10-12 08:53:18,185 | WARNING  | app.export_tasks | export job id=1 attempt 2/3 failed (OSError: disk is genuinely full) -- retrying in 4.5s
+2026-10-12 08:53:18,188 | ERROR    | app.export_tasks | export job id=1 failed permanently after 3 attempt(s): disk is genuinely full
+Traceback (most recent call last):
+  File "/home/user/DevTrack/backend/app/tasks/export_tasks.py", line 104, in generate_project_export
+    path = _csv_path(job_id)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/tests/test_export_reliability.py", line 146, in <lambda>
+    lambda job_id: (_ for _ in ()).throw(OSError("disk is genuinely full")),
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/tests/test_export_reliability.py", line 146, in <genexpr>
+    lambda job_id: (_ for _ in ()).throw(OSError("disk is genuinely full")),
+OSError: disk is genuinely full
+2026-10-12 08:53:18,200 | ERROR    | app.export_tasks | export job id=999999 not found -- permanent failure, not retrying
+2026-10-12 08:53:18,477 | INFO     | app.auth_service | New user registered: retry3@example.com (id=1)
+2026-10-12 08:53:18,748 | INFO     | app.auth_service | User logged in: retry3@example.com (id=1)
+2026-10-12 08:53:19,015 | INFO     | app.auth_service | New user registered: retry@example.com (id=2)
+2026-10-12 08:53:19,023 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:19,033 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:19,044 | WARNING  | app.export_tasks | export job id=1 attempt 1/3 failed (OSError: blip) -- retrying in 2.2s
+2026-10-12 08:53:19,047 | WARNING  | app.export_tasks | export job id=1 attempt 2/3 failed (OSError: blip) -- retrying in 3.0s
+2026-10-12 08:53:19,051 | INFO     | app.export_tasks | export job id=1 completed: 1 rows -> /home/user/DevTrack/backend/app/tasks/../../exports/export_1.csv (attempt 3)
+2026-10-12 08:53:19,326 | INFO     | app.auth_service | New user registered: strand@example.com (id=1)
+2026-10-12 08:53:19,595 | INFO     | app.auth_service | User logged in: strand@example.com (id=1)
+2026-10-12 08:53:19,862 | INFO     | app.auth_service | New user registered: retry@example.com (id=2)
+2026-10-12 08:53:19,871 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:19,880 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:19,897 | WARNING  | app.export_tasks | Recovered 2 stranded export job(s) left PENDING/RUNNING
+2026-10-12 08:53:20,174 | INFO     | app.auth_service | New user registered: strand2@example.com (id=1)
+2026-10-12 08:53:20,446 | INFO     | app.auth_service | User logged in: strand2@example.com (id=1)
+2026-10-12 08:53:20,776 | INFO     | app.auth_service | New user registered: retry@example.com (id=2)
+2026-10-12 08:53:20,786 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:20,795 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:20,902 | CRITICAL | app.dead_letter | Could not dead-letter job payload to Redis (ConnectionError: simulated Redis outage). The job is still marked failed in the database with its error message; only the replay-ready copy was lost.
+2026-10-12 08:53:20,902 | WARNING  | app.dead_letter | Redis unavailable while counting dead letters: simulated Redis outage
+2026-10-12 08:53:20,902 | WARNING  | app.dead_letter | Redis unavailable while reading dead letters: simulated Redis outage
+2026-10-12 08:53:21,173 | INFO     | app.auth_service | New user registered: api-attempts@example.com (id=1)
+2026-10-12 08:53:21,442 | INFO     | app.auth_service | User logged in: api-attempts@example.com (id=1)
+2026-10-12 08:53:21,733 | INFO     | app.auth_service | New user registered: retry@example.com (id=2)
+2026-10-12 08:53:21,743 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:21,755 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:21,771 | WARNING  | app.export_tasks | export job id=1 attempt 1/3 failed (OSError: blip) -- retrying in 2.6s
+2026-10-12 08:53:21,778 | INFO     | app.export_tasks | export job id=1 completed: 1 rows -> /home/user/DevTrack/backend/app/tasks/../../exports/export_1.csv (attempt 2)
+2026-10-12 08:53:22,098 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:22,380 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:22,390 | INFO     | app.project_service | Project created: Sprint 1 (id=1) by user_id=1
+2026-10-12 08:53:22,401 | INFO     | app.issue_service | Issue created: Issue A (id=1) by user_id=1
+2026-10-12 08:53:22,415 | INFO     | app.issue_service | Issue created: Issue B (id=2) by user_id=1
+2026-10-12 08:53:22,431 | INFO     | app.export_tasks | export job id=1 completed: 2 rows -> /home/user/DevTrack/backend/app/tasks/../../exports/export_1.csv (attempt 1)
+2026-10-12 08:53:22,438 | INFO     | app.export_service | Export job id=1 queued for project_id=1 by user_id=1
+2026-10-12 08:53:22,806 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:23,088 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:23,096 | INFO     | app.main | Handled error on POST /projects/999999/export: Project not found.
+2026-10-12 08:53:23,392 | INFO     | app.auth_service | New user registered: owner@example.com (id=1)
+2026-10-12 08:53:23,675 | INFO     | app.auth_service | User logged in: owner@example.com (id=1)
+2026-10-12 08:53:23,684 | INFO     | app.project_service | Project created: Sprint 1 (id=1) by user_id=1
+2026-10-12 08:53:23,693 | INFO     | app.issue_service | Issue created: Fix bug (id=1) by user_id=1
+2026-10-12 08:53:23,703 | INFO     | app.export_tasks | export job id=1 completed: 1 rows -> /home/user/DevTrack/backend/app/tasks/../../exports/export_1.csv (attempt 1)
+2026-10-12 08:53:23,707 | INFO     | app.export_service | Export job id=1 queued for project_id=1 by user_id=1
+2026-10-12 08:53:23,978 | INFO     | app.auth_service | New user registered: stranger@example.com (id=2)
+2026-10-12 08:53:23,984 | INFO     | app.main | Handled error on POST /auth/register: A user with this email already exists.
+2026-10-12 08:53:24,255 | INFO     | app.auth_service | User logged in: stranger@example.com (id=2)
+2026-10-12 08:53:24,262 | INFO     | app.main | Handled error on GET /export-jobs/1: You do not have permission to view this export job.
+2026-10-12 08:53:24,268 | INFO     | app.main | Handled error on GET /export-jobs/1/download: You do not have permission to view this export job.
+2026-10-12 08:53:24,552 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:24,827 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:24,835 | INFO     | app.project_service | Project created: Sprint 1 (id=1) by user_id=1
+2026-10-12 08:53:24,849 | INFO     | app.main | Handled error on GET /export-jobs/1/download: Export job is not ready for download (status: pending).
+2026-10-12 08:53:25,124 | INFO     | app.auth_service | New user registered: issueowner1@example.com (id=1)
+2026-10-12 08:53:25,408 | INFO     | app.auth_service | User logged in: issueowner1@example.com (id=1)
+2026-10-12 08:53:25,420 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:25,433 | INFO     | app.issue_service | Issue created: Fix login bug (id=1) by user_id=1
+2026-10-12 08:53:25,717 | INFO     | app.auth_service | New user registered: issueowner2@example.com (id=1)
+2026-10-12 08:53:26,019 | INFO     | app.auth_service | User logged in: issueowner2@example.com (id=1)
+2026-10-12 08:53:26,028 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:26,039 | INFO     | app.issue_service | Issue created: Bug A (id=1) by user_id=1
+2026-10-12 08:53:26,049 | INFO     | app.issue_service | Issue created: Feature B (id=2) by user_id=1
+2026-10-12 08:53:26,331 | INFO     | app.auth_service | New user registered: issueowner3@example.com (id=1)
+2026-10-12 08:53:26,615 | INFO     | app.auth_service | User logged in: issueowner3@example.com (id=1)
+2026-10-12 08:53:26,624 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:26,633 | INFO     | app.issue_service | Issue created: Workflow Issue (id=1) by user_id=1
+2026-10-12 08:53:26,642 | INFO     | app.issue_service | Issue id=1 status changed to in_progress by user_id=1
+2026-10-12 08:53:26,651 | INFO     | app.issue_service | Issue id=1 status changed to done by user_id=1
+2026-10-12 08:53:26,929 | INFO     | app.auth_service | New user registered: issueowner4@example.com (id=1)
+2026-10-12 08:53:27,200 | INFO     | app.auth_service | User logged in: issueowner4@example.com (id=1)
+2026-10-12 08:53:27,209 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:27,219 | INFO     | app.issue_service | Issue created: Skip Issue (id=1) by user_id=1
+2026-10-12 08:53:27,226 | INFO     | app.main | Handled error on PATCH /issues/1/status: Cannot transition issue from 'todo' to 'done'.
+2026-10-12 08:53:27,502 | INFO     | app.auth_service | New user registered: issueowner5@example.com (id=1)
+2026-10-12 08:53:27,774 | INFO     | app.auth_service | User logged in: issueowner5@example.com (id=1)
+2026-10-12 08:53:27,782 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:27,791 | INFO     | app.issue_service | Issue created: Assign Me (id=1) by user_id=1
+2026-10-12 08:53:28,059 | INFO     | app.auth_service | New user registered: developer1@example.com (id=2)
+2026-10-12 08:53:28,334 | INFO     | app.auth_service | User logged in: developer1@example.com (id=2)
+2026-10-12 08:53:28,353 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:28,355 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:28,645 | INFO     | app.auth_service | New user registered: issueowner6@example.com (id=1)
+2026-10-12 08:53:28,914 | INFO     | app.auth_service | User logged in: issueowner6@example.com (id=1)
+2026-10-12 08:53:28,922 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:28,930 | INFO     | app.issue_service | Issue created: Delete Me (id=1) by user_id=1
+2026-10-12 08:53:28,942 | INFO     | app.issue_service | Issue deleted: id=1 by user_id=1
+2026-10-12 08:53:28,949 | INFO     | app.main | Handled error on GET /issues/1: Issue not found.
+2026-10-12 08:53:29,227 | INFO     | app.auth_service | New user registered: commenter1@example.com (id=1)
+2026-10-12 08:53:29,504 | INFO     | app.auth_service | User logged in: commenter1@example.com (id=1)
+2026-10-12 08:53:29,517 | INFO     | app.project_service | Project created: Issue Test Project (id=1) by user_id=1
+2026-10-12 08:53:29,532 | INFO     | app.issue_service | Issue created: Commented Issue (id=1) by user_id=1
+2026-10-12 08:53:29,543 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:29,843 | INFO     | app.auth_service | New user registered: notif_owner1@example.com (id=1)
+2026-10-12 08:53:30,144 | INFO     | app.auth_service | User logged in: notif_owner1@example.com (id=1)
+2026-10-12 08:53:30,154 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:30,168 | INFO     | app.issue_service | Issue created: Needs assignment (id=1) by user_id=1
+2026-10-12 08:53:30,471 | INFO     | app.auth_service | New user registered: notif_dev1@example.com (id=2)
+2026-10-12 08:53:30,777 | INFO     | app.auth_service | User logged in: notif_dev1@example.com (id=2)
+2026-10-12 08:53:30,795 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:30,796 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:31,080 | INFO     | app.auth_service | New user registered: notif_self@example.com (id=1)
+2026-10-12 08:53:31,363 | INFO     | app.auth_service | User logged in: notif_self@example.com (id=1)
+2026-10-12 08:53:31,395 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:31,427 | INFO     | app.issue_service | Issue created: Self assign (id=1) by user_id=1
+2026-10-12 08:53:31,445 | INFO     | app.issue_service | Issue id=1 assigned to user_id=1 by user_id=1
+2026-10-12 08:53:31,740 | INFO     | app.auth_service | New user registered: notif_owner2@example.com (id=1)
+2026-10-12 08:53:32,011 | INFO     | app.auth_service | User logged in: notif_owner2@example.com (id=1)
+2026-10-12 08:53:32,019 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:32,028 | INFO     | app.issue_service | Issue created: Status flow (id=1) by user_id=1
+2026-10-12 08:53:32,296 | INFO     | app.auth_service | New user registered: notif_dev2@example.com (id=2)
+2026-10-12 08:53:32,568 | INFO     | app.auth_service | User logged in: notif_dev2@example.com (id=2)
+2026-10-12 08:53:32,583 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:32,584 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:32,595 | INFO     | app.issue_service | Issue id=1 status changed to in_progress by user_id=1
+2026-10-12 08:53:32,596 | INFO     | app.notification_service | Notification created id=2 for user_id=2 type=issue_status_changed
+2026-10-12 08:53:32,883 | INFO     | app.auth_service | New user registered: notif_owner3@example.com (id=1)
+2026-10-12 08:53:33,154 | INFO     | app.auth_service | User logged in: notif_owner3@example.com (id=1)
+2026-10-12 08:53:33,162 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:33,170 | INFO     | app.issue_service | Issue created: Commented flow (id=1) by user_id=1
+2026-10-12 08:53:33,439 | INFO     | app.auth_service | New user registered: notif_dev3@example.com (id=2)
+2026-10-12 08:53:33,715 | INFO     | app.auth_service | User logged in: notif_dev3@example.com (id=2)
+2026-10-12 08:53:33,730 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:33,731 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:33,739 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:33,740 | INFO     | app.notification_service | Notification created id=2 for user_id=2 type=issue_commented
+2026-10-12 08:53:34,021 | INFO     | app.auth_service | New user registered: notif_owner4@example.com (id=1)
+2026-10-12 08:53:34,292 | INFO     | app.auth_service | User logged in: notif_owner4@example.com (id=1)
+2026-10-12 08:53:34,299 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:34,309 | INFO     | app.issue_service | Issue created: Read flow (id=1) by user_id=1
+2026-10-12 08:53:34,580 | INFO     | app.auth_service | New user registered: notif_dev4@example.com (id=2)
+2026-10-12 08:53:34,859 | INFO     | app.auth_service | User logged in: notif_dev4@example.com (id=2)
+2026-10-12 08:53:34,875 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:34,877 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:35,187 | INFO     | app.auth_service | New user registered: notif_owner5@example.com (id=1)
+2026-10-12 08:53:35,469 | INFO     | app.auth_service | User logged in: notif_owner5@example.com (id=1)
+2026-10-12 08:53:35,478 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:35,489 | INFO     | app.issue_service | Issue created: Auth flow (id=1) by user_id=1
+2026-10-12 08:53:35,757 | INFO     | app.auth_service | New user registered: notif_dev5@example.com (id=2)
+2026-10-12 08:53:36,027 | INFO     | app.auth_service | User logged in: notif_dev5@example.com (id=2)
+2026-10-12 08:53:36,040 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:36,041 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:36,315 | INFO     | app.auth_service | New user registered: notif_intruder@example.com (id=3)
+2026-10-12 08:53:36,592 | INFO     | app.auth_service | User logged in: notif_intruder@example.com (id=3)
+2026-10-12 08:53:36,600 | INFO     | app.main | Handled error on POST /notifications/1/read: You cannot modify another user's notification.
+2026-10-12 08:53:36,887 | INFO     | app.auth_service | New user registered: notif_owner6@example.com (id=1)
+2026-10-12 08:53:37,159 | INFO     | app.auth_service | User logged in: notif_owner6@example.com (id=1)
+2026-10-12 08:53:37,167 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:37,438 | INFO     | app.auth_service | New user registered: notif_dev6@example.com (id=2)
+2026-10-12 08:53:37,721 | INFO     | app.auth_service | User logged in: notif_dev6@example.com (id=2)
+2026-10-12 08:53:37,738 | INFO     | app.issue_service | Issue created: Bulk 0 (id=1) by user_id=1
+2026-10-12 08:53:37,748 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:37,750 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:37,761 | INFO     | app.issue_service | Issue created: Bulk 1 (id=2) by user_id=1
+2026-10-12 08:53:37,772 | INFO     | app.issue_service | Issue id=2 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:37,773 | INFO     | app.notification_service | Notification created id=2 for user_id=2 type=issue_assigned
+2026-10-12 08:53:37,782 | INFO     | app.issue_service | Issue created: Bulk 2 (id=3) by user_id=1
+2026-10-12 08:53:37,791 | INFO     | app.issue_service | Issue id=3 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:37,792 | INFO     | app.notification_service | Notification created id=3 for user_id=2 type=issue_assigned
+2026-10-12 08:53:38,104 | INFO     | app.auth_service | New user registered: ws_owner1@example.com (id=1)
+2026-10-12 08:53:38,378 | INFO     | app.auth_service | User logged in: ws_owner1@example.com (id=1)
+2026-10-12 08:53:38,386 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:38,395 | INFO     | app.issue_service | Issue created: WS backlog (id=1) by user_id=1
+2026-10-12 08:53:38,665 | INFO     | app.auth_service | New user registered: ws_dev1@example.com (id=2)
+2026-10-12 08:53:38,938 | INFO     | app.auth_service | User logged in: ws_dev1@example.com (id=2)
+2026-10-12 08:53:38,957 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:38,958 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:38,963 | INFO     | app.ws_manager | WebSocket connected for user_id=2 (total_for_user=1)
+2026-10-12 08:53:38,965 | INFO     | app.ws_manager | WebSocket disconnected for user_id=2
+2026-10-12 08:53:39,243 | INFO     | app.auth_service | New user registered: ws_owner2@example.com (id=1)
+2026-10-12 08:53:39,527 | INFO     | app.auth_service | User logged in: ws_owner2@example.com (id=1)
+2026-10-12 08:53:39,536 | INFO     | app.project_service | Project created: Notif Test Project (id=1) by user_id=1
+2026-10-12 08:53:39,545 | INFO     | app.issue_service | Issue created: WS live push (id=1) by user_id=1
+2026-10-12 08:53:39,814 | INFO     | app.auth_service | New user registered: ws_dev2@example.com (id=2)
+2026-10-12 08:53:40,087 | INFO     | app.auth_service | User logged in: ws_dev2@example.com (id=2)
+2026-10-12 08:53:40,104 | INFO     | app.ws_manager | WebSocket connected for user_id=2 (total_for_user=1)
+2026-10-12 08:53:40,114 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:53:40,115 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:53:40,119 | INFO     | app.ws_manager | WebSocket disconnected for user_id=2
+2026-10-12 08:53:40,439 | INFO     | app.auth_service | New user registered: realowner@example.com (id=1)
+2026-10-12 08:53:40,720 | INFO     | app.auth_service | User logged in: realowner@example.com (id=1)
+2026-10-12 08:53:40,738 | INFO     | app.project_service | Project created: Owner's Project (id=1) by user_id=1
+2026-10-12 08:53:41,077 | INFO     | app.auth_service | New user registered: intruder@example.com (id=2)
+2026-10-12 08:53:41,386 | INFO     | app.auth_service | User logged in: intruder@example.com (id=2)
+2026-10-12 08:53:41,397 | INFO     | app.main | Handled error on PUT /projects/1: Only the project owner or an admin can perform this action.
+2026-10-12 08:53:41,738 | INFO     | app.auth_service | New user registered: realowner2@example.com (id=1)
+2026-10-12 08:53:42,059 | INFO     | app.auth_service | User logged in: realowner2@example.com (id=1)
+2026-10-12 08:53:42,068 | INFO     | app.project_service | Project created: Owner's Project 2 (id=1) by user_id=1
+2026-10-12 08:53:42,348 | INFO     | app.auth_service | New user registered: intruder2@example.com (id=2)
+2026-10-12 08:53:42,617 | INFO     | app.auth_service | User logged in: intruder2@example.com (id=2)
+2026-10-12 08:53:42,624 | INFO     | app.main | Handled error on DELETE /projects/1: Only the project owner or an admin can perform this action.
+2026-10-12 08:53:42,900 | INFO     | app.auth_service | New user registered: regularuser@example.com (id=1)
+2026-10-12 08:53:43,168 | INFO     | app.auth_service | User logged in: regularuser@example.com (id=1)
+2026-10-12 08:53:43,178 | INFO     | app.main | Handled error on DELETE /users/1: Admin privileges are required for this action.
+2026-10-12 08:53:43,452 | INFO     | app.auth_service | New user registered: targetuser@example.com (id=1)
+2026-10-12 08:53:43,727 | INFO     | app.auth_service | User logged in: targetuser@example.com (id=1)
+2026-10-12 08:53:44,001 | INFO     | app.auth_service | New user registered: adminuser@example.com (id=2)
+2026-10-12 08:53:44,271 | INFO     | app.auth_service | User logged in: adminuser@example.com (id=2)
+2026-10-12 08:53:44,287 | INFO     | app.users_api | User id=1 deleted by admin_id=2
+2026-10-12 08:53:44,566 | INFO     | app.auth_service | New user registered: commentowner@example.com (id=1)
+2026-10-12 08:53:44,840 | INFO     | app.auth_service | User logged in: commentowner@example.com (id=1)
+2026-10-12 08:53:44,848 | INFO     | app.project_service | Project created: Comment Project (id=1) by user_id=1
+2026-10-12 08:53:44,856 | INFO     | app.issue_service | Issue created: Issue for comments (id=1) by user_id=1
+2026-10-12 08:53:44,863 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:45,128 | INFO     | app.auth_service | New user registered: notauthor@example.com (id=2)
+2026-10-12 08:53:45,395 | INFO     | app.auth_service | User logged in: notauthor@example.com (id=2)
+2026-10-12 08:53:45,403 | INFO     | app.main | Handled error on DELETE /comments/1: Only the comment author or an admin can delete this comment.
+2026-10-12 08:53:45,677 | INFO     | app.auth_service | New user registered: commentauthor@example.com (id=1)
+2026-10-12 08:53:45,960 | INFO     | app.auth_service | User logged in: commentauthor@example.com (id=1)
+2026-10-12 08:53:45,969 | INFO     | app.project_service | Project created: Author Project (id=1) by user_id=1
+2026-10-12 08:53:45,981 | INFO     | app.issue_service | Issue created: Issue for own comment (id=1) by user_id=1
+2026-10-12 08:53:45,989 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:53:46,088 | INFO     | app.comment_service | Comment id=1 deleted by user_id=1
+2026-10-12 08:53:46,381 | INFO     | app.auth_service | New user registered: owner1@example.com (id=1)
+2026-10-12 08:53:46,667 | INFO     | app.auth_service | User logged in: owner1@example.com (id=1)
+2026-10-12 08:53:46,680 | INFO     | app.project_service | Project created: DevTrack Core (id=1) by user_id=1
+2026-10-12 08:53:46,965 | INFO     | app.auth_service | New user registered: owner2@example.com (id=1)
+2026-10-12 08:53:47,244 | INFO     | app.auth_service | User logged in: owner2@example.com (id=1)
+2026-10-12 08:53:47,256 | INFO     | app.project_service | Project created: Alpha Rocket (id=1) by user_id=1
+2026-10-12 08:53:47,266 | INFO     | app.project_service | Project created: Beta Launcher (id=2) by user_id=1
+2026-10-12 08:53:47,567 | INFO     | app.auth_service | New user registered: owner3@example.com (id=1)
+2026-10-12 08:53:47,844 | INFO     | app.auth_service | User logged in: owner3@example.com (id=1)
+2026-10-12 08:53:47,853 | INFO     | app.project_service | Project created: Gamma (id=1) by user_id=1
+2026-10-12 08:53:48,159 | INFO     | app.auth_service | New user registered: owner4@example.com (id=1)
+2026-10-12 08:53:48,434 | INFO     | app.auth_service | User logged in: owner4@example.com (id=1)
+2026-10-12 08:53:48,443 | INFO     | app.main | Handled error on GET /projects/9999: Project not found.
+2026-10-12 08:53:48,742 | INFO     | app.auth_service | New user registered: owner5@example.com (id=1)
+2026-10-12 08:53:49,016 | INFO     | app.auth_service | User logged in: owner5@example.com (id=1)
+2026-10-12 08:53:49,027 | INFO     | app.project_service | Project created: Old Title (id=1) by user_id=1
+2026-10-12 08:53:49,037 | INFO     | app.project_service | Project updated: id=1 by user_id=1
+2026-10-12 08:53:49,386 | INFO     | app.auth_service | New user registered: owner6@example.com (id=1)
+2026-10-12 08:53:49,683 | INFO     | app.auth_service | User logged in: owner6@example.com (id=1)
+2026-10-12 08:53:49,693 | INFO     | app.project_service | Project created: To Delete (id=1) by user_id=1
+2026-10-12 08:53:49,703 | INFO     | app.project_service | Project deleted: id=1 by user_id=1
+2026-10-12 08:53:49,710 | INFO     | app.main | Handled error on GET /projects/1: Project not found.
+2026-10-12 08:53:49,991 | INFO     | app.auth_service | New user registered: ratelimit@example.com (id=1)
+2026-10-12 08:53:50,269 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:50,271 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:50,627 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:50,628 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:50,907 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:50,908 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:51,176 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:51,177 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:51,448 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:51,449 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:51,721 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:51,723 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:52,007 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:52,008 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:52,283 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:52,284 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:52,557 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:52,558 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:52,836 | WARNING  | app.auth_service | Failed login attempt for email=ratelimit@example.com
+2026-10-12 08:53:52,837 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:52,842 | INFO     | app.main | Handled error on POST /auth/login: Too many requests. Try again in 40 seconds.
+2026-10-12 08:53:53,121 | INFO     | app.auth_service | New user registered: user0@example.com (id=1)
+2026-10-12 08:53:53,389 | INFO     | app.auth_service | New user registered: user1@example.com (id=2)
+2026-10-12 08:53:53,675 | INFO     | app.auth_service | New user registered: user2@example.com (id=3)
+2026-10-12 08:53:53,945 | INFO     | app.auth_service | New user registered: user3@example.com (id=4)
+2026-10-12 08:53:54,220 | INFO     | app.auth_service | New user registered: user4@example.com (id=5)
+2026-10-12 08:53:54,225 | INFO     | app.main | Handled error on POST /auth/register: Too many requests. Try again in 40 seconds.
+2026-10-12 08:53:54,241 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,242 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,249 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,249 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,256 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,257 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,263 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,264 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,271 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,271 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,278 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,278 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,286 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,287 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,294 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,294 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,301 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,302 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,309 | WARNING  | app.auth_service | Failed login attempt for email=nobody@example.com
+2026-10-12 08:53:54,310 | INFO     | app.main | Handled error on POST /auth/login: Incorrect email or password.
+2026-10-12 08:53:54,575 | INFO     | app.auth_service | New user registered: unaffected@example.com (id=1)
+2026-10-12 08:53:54,850 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:55,122 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:55,131 | INFO     | app.project_service | Project created: P (id=1) by user_id=1
+2026-10-12 08:53:55,141 | INFO     | app.issue_service | Issue created: t (id=1) by user_id=1
+2026-10-12 08:53:55,152 | INFO     | app.issue_service | Issue created: t (id=2) by user_id=1
+2026-10-12 08:53:55,163 | INFO     | app.issue_service | Issue created: t (id=3) by user_id=1
+2026-10-12 08:53:55,174 | INFO     | app.issue_service | Issue created: t (id=4) by user_id=1
+2026-10-12 08:53:55,184 | INFO     | app.issue_service | Issue created: t (id=5) by user_id=1
+2026-10-12 08:53:55,193 | INFO     | app.issue_service | Issue created: t (id=6) by user_id=1
+2026-10-12 08:53:55,202 | INFO     | app.issue_service | Issue created: t (id=7) by user_id=1
+2026-10-12 08:53:55,211 | INFO     | app.issue_service | Issue created: t (id=8) by user_id=1
+2026-10-12 08:53:55,220 | INFO     | app.issue_service | Issue created: t (id=9) by user_id=1
+2026-10-12 08:53:55,231 | INFO     | app.issue_service | Issue created: t (id=10) by user_id=1
+2026-10-12 08:53:55,241 | INFO     | app.issue_service | Issue created: t (id=11) by user_id=1
+2026-10-12 08:53:55,252 | INFO     | app.issue_service | Issue created: t (id=12) by user_id=1
+2026-10-12 08:53:55,263 | INFO     | app.issue_service | Issue created: t (id=13) by user_id=1
+2026-10-12 08:53:55,273 | INFO     | app.issue_service | Issue created: t (id=14) by user_id=1
+2026-10-12 08:53:55,284 | INFO     | app.issue_service | Issue created: t (id=15) by user_id=1
+2026-10-12 08:53:55,295 | INFO     | app.issue_service | Issue created: t (id=16) by user_id=1
+2026-10-12 08:53:55,309 | INFO     | app.issue_service | Issue created: t (id=17) by user_id=1
+2026-10-12 08:53:55,321 | INFO     | app.issue_service | Issue created: t (id=18) by user_id=1
+2026-10-12 08:53:55,331 | INFO     | app.issue_service | Issue created: t (id=19) by user_id=1
+2026-10-12 08:53:55,340 | INFO     | app.issue_service | Issue created: t (id=20) by user_id=1
+2026-10-12 08:53:55,350 | INFO     | app.issue_service | Issue created: t (id=21) by user_id=1
+2026-10-12 08:53:55,360 | INFO     | app.issue_service | Issue created: t (id=22) by user_id=1
+2026-10-12 08:53:55,370 | INFO     | app.issue_service | Issue created: t (id=23) by user_id=1
+2026-10-12 08:53:55,380 | INFO     | app.issue_service | Issue created: t (id=24) by user_id=1
+2026-10-12 08:53:55,390 | INFO     | app.issue_service | Issue created: t (id=25) by user_id=1
+2026-10-12 08:53:55,399 | INFO     | app.issue_service | Issue created: t (id=26) by user_id=1
+2026-10-12 08:53:55,409 | INFO     | app.issue_service | Issue created: t (id=27) by user_id=1
+2026-10-12 08:53:55,417 | INFO     | app.issue_service | Issue created: t (id=28) by user_id=1
+2026-10-12 08:53:55,426 | INFO     | app.issue_service | Issue created: t (id=29) by user_id=1
+2026-10-12 08:53:55,436 | INFO     | app.issue_service | Issue created: t (id=30) by user_id=1
+2026-10-12 08:53:55,448 | INFO     | app.issue_service | Issue created: t (id=31) by user_id=1
+2026-10-12 08:53:55,459 | INFO     | app.issue_service | Issue created: t (id=32) by user_id=1
+2026-10-12 08:53:55,469 | INFO     | app.issue_service | Issue created: t (id=33) by user_id=1
+2026-10-12 08:53:55,480 | INFO     | app.issue_service | Issue created: t (id=34) by user_id=1
+2026-10-12 08:53:55,490 | INFO     | app.issue_service | Issue created: t (id=35) by user_id=1
+2026-10-12 08:53:55,501 | INFO     | app.issue_service | Issue created: t (id=36) by user_id=1
+2026-10-12 08:53:55,510 | INFO     | app.issue_service | Issue created: t (id=37) by user_id=1
+2026-10-12 08:53:55,520 | INFO     | app.issue_service | Issue created: t (id=38) by user_id=1
+2026-10-12 08:53:55,530 | INFO     | app.issue_service | Issue created: t (id=39) by user_id=1
+2026-10-12 08:53:55,539 | INFO     | app.issue_service | Issue created: t (id=40) by user_id=1
+2026-10-12 08:53:55,546 | INFO     | app.issue_service | Issue created: t (id=41) by user_id=1
+2026-10-12 08:53:55,554 | INFO     | app.issue_service | Issue created: t (id=42) by user_id=1
+2026-10-12 08:53:55,561 | INFO     | app.issue_service | Issue created: t (id=43) by user_id=1
+2026-10-12 08:53:55,570 | INFO     | app.issue_service | Issue created: t (id=44) by user_id=1
+2026-10-12 08:53:55,579 | INFO     | app.issue_service | Issue created: t (id=45) by user_id=1
+2026-10-12 08:53:55,587 | INFO     | app.issue_service | Issue created: t (id=46) by user_id=1
+2026-10-12 08:53:55,595 | INFO     | app.issue_service | Issue created: t (id=47) by user_id=1
+2026-10-12 08:53:55,604 | INFO     | app.issue_service | Issue created: t (id=48) by user_id=1
+2026-10-12 08:53:55,612 | INFO     | app.issue_service | Issue created: t (id=49) by user_id=1
+2026-10-12 08:53:55,619 | INFO     | app.issue_service | Issue created: t (id=50) by user_id=1
+2026-10-12 08:53:55,627 | INFO     | app.issue_service | Issue created: t (id=51) by user_id=1
+2026-10-12 08:53:55,637 | INFO     | app.issue_service | Issue created: t (id=52) by user_id=1
+2026-10-12 08:53:55,646 | INFO     | app.issue_service | Issue created: t (id=53) by user_id=1
+2026-10-12 08:53:55,655 | INFO     | app.issue_service | Issue created: t (id=54) by user_id=1
+2026-10-12 08:53:55,664 | INFO     | app.issue_service | Issue created: t (id=55) by user_id=1
+2026-10-12 08:53:55,674 | INFO     | app.issue_service | Issue created: t (id=56) by user_id=1
+2026-10-12 08:53:55,683 | INFO     | app.issue_service | Issue created: t (id=57) by user_id=1
+2026-10-12 08:53:55,693 | INFO     | app.issue_service | Issue created: t (id=58) by user_id=1
+2026-10-12 08:53:55,703 | INFO     | app.issue_service | Issue created: t (id=59) by user_id=1
+2026-10-12 08:53:55,714 | INFO     | app.issue_service | Issue created: t (id=60) by user_id=1
+2026-10-12 08:53:55,720 | INFO     | app.main | Handled error on POST /issues: Too many requests. Try again in 40 seconds.
+2026-10-12 08:53:55,731 | WARNING  | app.rate_limit | Redis unavailable for rate limit check on ratelimit:register:ip:testclient: simulated Redis outage -- failing open
+2026-10-12 08:53:55,994 | INFO     | app.auth_service | New user registered: duringoutage@example.com (id=1)
+2026-10-12 08:53:56,274 | INFO     | app.auth_service | New user registered: rollover0@example.com (id=1)
+2026-10-12 08:53:56,545 | INFO     | app.auth_service | New user registered: rollover1@example.com (id=2)
+2026-10-12 08:53:56,818 | INFO     | app.auth_service | New user registered: rollover2@example.com (id=3)
+2026-10-12 08:53:57,091 | INFO     | app.auth_service | New user registered: rollover3@example.com (id=4)
+2026-10-12 08:53:57,357 | INFO     | app.auth_service | New user registered: rollover4@example.com (id=5)
+2026-10-12 08:53:57,362 | INFO     | app.main | Handled error on POST /auth/register: Too many requests. Try again in 40 seconds.
+2026-10-12 08:53:57,642 | INFO     | app.auth_service | New user registered: after-rollover@example.com (id=6)
+2026-10-12 08:53:58,050 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:58,327 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:58,341 | INFO     | app.main | Handled error on POST /issues: Project not found.
+2026-10-12 08:53:58,673 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:58,951 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:58,960 | INFO     | app.main | Handled error on GET /projects/999: Project not found.
+2026-10-12 08:53:58,969 | INFO     | app.main | Handled error on GET /projects/999: Project not found.
+2026-10-12 08:53:58,977 | INFO     | app.main | Handled error on GET /projects/999: Project not found.
+2026-10-12 08:53:58,988 | INFO     | app.project_service | Project created: after the errors (id=1) by user_id=1
+2026-10-12 08:53:59,291 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:53:59,568 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:53:59,583 | INFO     | app.main | Handled error on GET /projects/999: Project not found.
+2026-10-12 08:53:59,590 | ERROR    | app.main | Unexpected error on GET /projects: forced failure inside the request
+Traceback (most recent call last):
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 197, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/main.py", line 51, in access_log_middleware
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 173, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 149, in simple_response
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/routing.py", line 676, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2786, in app
+    await route.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1817, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2869, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1843, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1308, in handle
+    await effective_context.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 165, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 151, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 727, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 362, in run_endpoint_function
+    return await run_in_threadpool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/telemetry/_api.py", line 240, in _run_sync_endpoint
+    return function(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/api/projects.py", line 29, in list_projects
+    projects = project_service.list_projects(db, search=search)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/tests/test_session_lifecycle.py", line 77, in _boom
+    raise RuntimeError("forced failure inside the request")
+RuntimeError: forced failure inside the request
+2026-10-12 08:53:59,909 | INFO     | app.auth_service | New user registered: alice@example.com (id=1)
+2026-10-12 08:54:00,191 | INFO     | app.auth_service | User logged in: alice@example.com (id=1)
+2026-10-12 08:54:00,198 | ERROR    | app.main | Unexpected error on POST /projects: (sqlite3.IntegrityError) NOT NULL constraint failed: projects.created_at
+[SQL: INSERT INTO projects (title, description, owner_id) VALUES ('partial', 'x', ?)]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+Traceback (most recent call last):
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.IntegrityError: NOT NULL constraint failed: projects.created_at
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 197, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/main.py", line 51, in access_log_middleware
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 173, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 149, in simple_response
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/routing.py", line 676, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2786, in app
+    await route.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1817, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2869, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1843, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1308, in handle
+    await effective_context.app(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 165, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 151, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 727, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 362, in run_endpoint_function
+    return await run_in_threadpool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/fastapi/telemetry/_api.py", line 240, in _run_sync_endpoint
+    return function(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/api/projects.py", line 20, in create_project
+    return project_service.create_project(db, payload, current_user)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/backend/app/tests/test_session_lifecycle.py", line 98, in _create_then_fail
+    db.execute(text("INSERT INTO projects (title, description, owner_id) VALUES ('partial', 'x', :uid)"),
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2256, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/user/DevTrack/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: projects.created_at
+[SQL: INSERT INTO projects (title, description, owner_id) VALUES ('partial', 'x', ?)]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-10-12 08:54:00,227 | INFO     | app.project_service | Project created: fine (id=1) by user_id=1
+2026-10-12 08:54:00,228 | WARNING  | app.cache | Redis unavailable on DELETE dashboard:summary:1: Error 111 connecting to localhost:6379. Connection refused.
+2026-10-12 08:54:00,255 | INFO     | app.main | Handled error on GET /projects: Could not validate credentials.
+2026-10-12 08:54:00,269 | INFO     | app.main | Handled error on GET /projects: Could not validate credentials.
+2026-10-12 08:54:00,547 | INFO     | app.auth_service | New user registered: expiry@example.com (id=1)
+2026-10-12 08:54:00,834 | INFO     | app.auth_service | User logged in: expiry@example.com (id=1)
+2026-10-12 08:54:00,843 | INFO     | app.main | Handled error on GET /projects: Could not validate credentials.
+2026-10-12 08:54:01,121 | INFO     | app.auth_service | New user registered: typecheck@example.com (id=1)
+2026-10-12 08:54:01,396 | INFO     | app.auth_service | User logged in: typecheck@example.com (id=1)
+2026-10-12 08:54:01,667 | INFO     | app.auth_service | User logged in: typecheck@example.com (id=1)
+2026-10-12 08:54:01,673 | INFO     | app.main | Handled error on GET /projects: Expected an access token.
+2026-10-12 08:54:01,949 | INFO     | app.auth_service | New user registered: refreshcheck@example.com (id=1)
+2026-10-12 08:54:02,219 | INFO     | app.auth_service | User logged in: refreshcheck@example.com (id=1)
+2026-10-12 08:54:02,226 | INFO     | app.main | Handled error on POST /auth/refresh: Expected a refresh token.
+2026-10-12 08:54:02,505 | INFO     | app.auth_service | New user registered: control@example.com (id=1)
+2026-10-12 08:54:02,779 | INFO     | app.auth_service | User logged in: control@example.com (id=1)
+2026-10-12 08:54:03,061 | INFO     | app.auth_service | New user registered: malformed@example.com (id=1)
+2026-10-12 08:54:03,334 | INFO     | app.auth_service | User logged in: malformed@example.com (id=1)
+2026-10-12 08:54:03,627 | INFO     | app.auth_service | New user registered: types@example.com (id=1)
+2026-10-12 08:54:03,902 | INFO     | app.auth_service | User logged in: types@example.com (id=1)
+2026-10-12 08:54:04,192 | INFO     | app.auth_service | New user registered: extra@example.com (id=1)
+2026-10-12 08:54:04,464 | INFO     | app.auth_service | User logged in: extra@example.com (id=1)
+2026-10-12 08:54:04,472 | INFO     | app.project_service | Project created: Extra fields (id=1) by user_id=1
+2026-10-12 08:54:04,749 | INFO     | app.auth_service | New user registered: boundary-owner@example.com (id=1)
+2026-10-12 08:54:05,021 | INFO     | app.auth_service | User logged in: boundary-owner@example.com (id=1)
+2026-10-12 08:54:05,030 | INFO     | app.project_service | Project created: Boundary project (id=1) by user_id=1
+2026-10-12 08:54:05,039 | INFO     | app.issue_service | Issue created: Boundary issue (id=1) by user_id=1
+2026-10-12 08:54:05,307 | INFO     | app.auth_service | New user registered: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:05,583 | INFO     | app.auth_service | User logged in: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:05,597 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:54:05,598 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:54:05,610 | INFO     | app.issue_service | Issue updated: id=1 by user_id=1
+2026-10-12 08:54:05,891 | INFO     | app.auth_service | New user registered: blank@example.com (id=1)
+2026-10-12 08:54:06,159 | INFO     | app.auth_service | User logged in: blank@example.com (id=1)
+2026-10-12 08:54:06,444 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:06,713 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:06,720 | INFO     | app.main | Handled error on GET /projects/999999: Project not found.
+2026-10-12 08:54:07,002 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:07,271 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:07,279 | INFO     | app.main | Handled error on PUT /projects/999999: Project not found.
+2026-10-12 08:54:07,558 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:07,837 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:07,844 | INFO     | app.main | Handled error on DELETE /projects/999999: Project not found.
+2026-10-12 08:54:08,123 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:08,394 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:08,402 | INFO     | app.main | Handled error on GET /issues/999999: Issue not found.
+2026-10-12 08:54:08,685 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:08,954 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:08,961 | INFO     | app.main | Handled error on DELETE /issues/999999: Issue not found.
+2026-10-12 08:54:09,238 | INFO     | app.auth_service | New user registered: unknown-ids@example.com (id=1)
+2026-10-12 08:54:09,508 | INFO     | app.auth_service | User logged in: unknown-ids@example.com (id=1)
+2026-10-12 08:54:09,516 | INFO     | app.main | Handled error on GET /issues/999999/comments: Issue not found.
+2026-10-12 08:54:09,798 | INFO     | app.auth_service | New user registered: fresh-user@example.com (id=1)
+2026-10-12 08:54:10,073 | INFO     | app.auth_service | User logged in: fresh-user@example.com (id=1)
+2026-10-12 08:54:10,373 | INFO     | app.auth_service | New user registered: empty-dash@example.com (id=1)
+2026-10-12 08:54:10,645 | INFO     | app.auth_service | User logged in: empty-dash@example.com (id=1)
+2026-10-12 08:54:10,652 | INFO     | app.dashboard_service | Dashboard summary computed from DB for user_id=1
+2026-10-12 08:54:10,928 | INFO     | app.auth_service | New user registered: duplicate-title@example.com (id=1)
+2026-10-12 08:54:11,229 | INFO     | app.auth_service | User logged in: duplicate-title@example.com (id=1)
+2026-10-12 08:54:11,241 | INFO     | app.project_service | Project created: Duplicate (id=1) by user_id=1
+2026-10-12 08:54:11,252 | INFO     | app.project_service | Project created: Duplicate (id=2) by user_id=1
+2026-10-12 08:54:11,580 | INFO     | app.auth_service | New user registered: boundary-owner@example.com (id=1)
+2026-10-12 08:54:11,854 | INFO     | app.auth_service | User logged in: boundary-owner@example.com (id=1)
+2026-10-12 08:54:11,864 | INFO     | app.project_service | Project created: Boundary project (id=1) by user_id=1
+2026-10-12 08:54:11,873 | INFO     | app.issue_service | Issue created: Boundary issue (id=1) by user_id=1
+2026-10-12 08:54:12,141 | INFO     | app.auth_service | New user registered: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:12,412 | INFO     | app.auth_service | User logged in: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:12,426 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:54:12,427 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:54:12,446 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:54:12,448 | INFO     | app.notification_service | Notification created id=2 for user_id=2 type=issue_commented
+2026-10-12 08:54:12,458 | INFO     | app.comment_service | Comment added to issue_id=1 by user_id=1
+2026-10-12 08:54:12,460 | INFO     | app.notification_service | Notification created id=3 for user_id=2 type=issue_commented
+2026-10-12 08:54:12,782 | INFO     | app.auth_service | New user registered: pagination-probe@example.com (id=1)
+2026-10-12 08:54:13,061 | INFO     | app.auth_service | User logged in: pagination-probe@example.com (id=1)
+2026-10-12 08:54:13,069 | INFO     | app.project_service | Project created: page probe (id=1) by user_id=1
+2026-10-12 08:54:13,077 | INFO     | app.project_service | Project created: page probe (id=2) by user_id=1
+2026-10-12 08:54:13,084 | INFO     | app.project_service | Project created: page probe (id=3) by user_id=1
+2026-10-12 08:54:13,379 | INFO     | app.auth_service | New user registered: boundary-owner@example.com (id=1)
+2026-10-12 08:54:13,649 | INFO     | app.auth_service | User logged in: boundary-owner@example.com (id=1)
+2026-10-12 08:54:13,658 | INFO     | app.project_service | Project created: Boundary project (id=1) by user_id=1
+2026-10-12 08:54:13,666 | INFO     | app.issue_service | Issue created: Boundary issue (id=1) by user_id=1
+2026-10-12 08:54:13,938 | INFO     | app.auth_service | New user registered: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:14,239 | INFO     | app.auth_service | User logged in: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:14,257 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:54:14,258 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:54:14,280 | INFO     | app.project_service | Project deleted: id=1 by user_id=1
+2026-10-12 08:54:14,563 | INFO     | app.auth_service | New user registered: boundary-owner@example.com (id=1)
+2026-10-12 08:54:14,853 | INFO     | app.auth_service | User logged in: boundary-owner@example.com (id=1)
+2026-10-12 08:54:14,862 | INFO     | app.project_service | Project created: Boundary project (id=1) by user_id=1
+2026-10-12 08:54:14,872 | INFO     | app.issue_service | Issue created: Boundary issue (id=1) by user_id=1
+2026-10-12 08:54:15,139 | INFO     | app.auth_service | New user registered: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:15,425 | INFO     | app.auth_service | User logged in: boundary-assignee@example.com (id=2)
+2026-10-12 08:54:15,445 | INFO     | app.issue_service | Issue id=1 assigned to user_id=2 by user_id=1
+2026-10-12 08:54:15,446 | INFO     | app.notification_service | Notification created id=1 for user_id=2 type=issue_assigned
+2026-10-12 08:54:15,740 | INFO     | app.auth_service | New user registered: offboarding-admin@example.com (id=3)
+2026-10-12 08:54:16,015 | INFO     | app.auth_service | User logged in: offboarding-admin@example.com (id=3)
+2026-10-12 08:54:16,296 | INFO     | app.auth_service | User logged in: offboarding-admin@example.com (id=3)
+2026-10-12 08:54:16,308 | INFO     | app.users_api | User id=1 deleted by admin_id=3
+2026-10-12 08:54:16,595 | INFO     | app.auth_service | New user registered: ticket_shape@example.com (id=1)
+2026-10-12 08:54:16,881 | INFO     | app.auth_service | User logged in: ticket_shape@example.com (id=1)
+2026-10-12 08:54:17,162 | INFO     | app.auth_service | New user registered: ticket_scope@example.com (id=1)
+2026-10-12 08:54:17,442 | INFO     | app.auth_service | User logged in: ticket_scope@example.com (id=1)
+2026-10-12 08:54:17,762 | INFO     | app.auth_service | New user registered: ticket_replay@example.com (id=1)
+2026-10-12 08:54:18,041 | INFO     | app.auth_service | User logged in: ticket_replay@example.com (id=1)
+2026-10-12 08:54:18,052 | INFO     | app.main | Handled error on GET /users/me: Expected an access token.
+2026-10-12 08:54:18,339 | INFO     | app.auth_service | New user registered: ticket_refresh@example.com (id=1)
+2026-10-12 08:54:18,642 | INFO     | app.auth_service | User logged in: ticket_refresh@example.com (id=1)
+2026-10-12 08:54:18,652 | INFO     | app.main | Handled error on POST /auth/refresh: Expected a refresh token.
+2026-10-12 08:54:18,926 | INFO     | app.auth_service | New user registered: socket_access@example.com (id=1)
+2026-10-12 08:54:19,197 | INFO     | app.auth_service | User logged in: socket_access@example.com (id=1)
+2026-10-12 08:54:19,480 | INFO     | app.auth_service | New user registered: socket_refresh@example.com (id=1)
+2026-10-12 08:54:19,750 | INFO     | app.auth_service | User logged in: socket_refresh@example.com (id=1)
+2026-10-12 08:54:20,035 | INFO     | app.auth_service | New user registered: socket_expired@example.com (id=1)
+2026-10-12 08:54:20,315 | INFO     | app.auth_service | User logged in: socket_expired@example.com (id=1)
+2026-10-12 08:54:20,645 | INFO     | app.auth_service | New user registered: socket_valid@example.com (id=1)
+2026-10-12 08:54:20,926 | INFO     | app.auth_service | User logged in: socket_valid@example.com (id=1)
+2026-10-12 08:54:20,942 | INFO     | app.ws_manager | WebSocket connected for user_id=1 (total_for_user=1)
+2026-10-12 08:54:20,946 | INFO     | app.ws_manager | WebSocket disconnected for user_id=1

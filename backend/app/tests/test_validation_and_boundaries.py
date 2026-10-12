@@ -3,10 +3,14 @@
 The 34-operation sweep on Day 1 already proved the happy paths. This file goes
 after the inputs a client sends by accident or on purpose: malformed JSON, wrong
 types, ids that never existed, empty collections, an expired token, a refresh
-token presented as an access token — and the two delete paths that return 500
-today. Those two are pinned with `xfail(strict=True)`, so the defect lives in the
-suite as well as in the register: fix the FK policy (backlog A1) without removing
-the marker and the suite fails, loudly, on purpose.
+token presented as an access token — and the delete paths that used to return
+500 when rows (notifications, then export jobs) still referenced the project or
+user being deleted.
+
+Those defects (D1-2, D3-1) are fixed, and the `xfail(strict=True)` markers that
+pinned them are gone on purpose: the same tests now assert a real 204, so the
+suite fails if the cascades are ever removed again. Both halves are covered —
+notifications, and the `export_jobs` rows the original fix left untested.
 """
 import time
 
@@ -15,7 +19,7 @@ import pytest
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.database.models import User, UserRole
+from app.database.models import ExportJob, User, UserRole
 from app.tests.conftest import TestingSessionLocal, auth_headers, engine
 
 
@@ -239,10 +243,9 @@ def test_list_endpoints_ignore_limit_and_offset(client):
 
 
 # --------------------------------------------------------------------------
-# defects found by the audit, pinned while they are open
+# delete cascades (D1-2, D3-1): fixed -- these are regression tests now
 # --------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="D1-2: nothing cascades notifications.issue_id / export_jobs.project_id")
 def test_deleting_a_project_whose_issue_has_a_notification_succeeds(client, project_and_issue):
     """Currently 500 (ForeignKeyViolation on notifications.issue_id). Expected:
     204, with the notification removed along with the issue it describes."""
@@ -251,7 +254,6 @@ def test_deleting_a_project_whose_issue_has_a_notification_succeeds(client, proj
     assert resp.status_code == 204, f"project delete with a notification attached -> {resp.status_code}"
 
 
-@pytest.mark.xfail(strict=True, reason="D3-1: DELETE /users/{id} reaches the same missing cascade")
 def test_admin_can_delete_a_user_who_owns_work_with_notifications(client, project_and_issue):
     """Offboarding is the operation most likely to run against real data, and it
     is the one that 500s today."""
@@ -262,3 +264,83 @@ def test_admin_can_delete_a_user_who_owns_work_with_notifications(client, projec
     resp = client.delete(f"/users/{project_and_issue['owner_id']}",
                          headers={"Authorization": f"Bearer {admin['access_token']}"})
     assert resp.status_code == 204, f"admin user delete -> {resp.status_code}"
+
+
+# --------------------------------------------------------------------------
+# D1-2 / D3-1, second half: export_jobs. The two tests above cover the
+# notifications table. They do NOT cover `export_jobs.project_id` or
+# `export_jobs.requested_by_id`, which the same fix claims to cascade -- and
+# that gap is not hypothetical: the fix as first written declared
+# `ExportJob.project` / `ExportJob.requested_by` twice in the class body, and
+# the later, plain `relationship("Project")` / `relationship("User")` versions
+# shadowed the back_populates ones, so the mapper resolved a configuration the
+# author did not intend. Verified by inspecting
+# `ExportJob.__mapper__.relationships["project"].back_populates` (None before
+# the de-duplication, "export_jobs" after). These two tests are what make that
+# visible from the suite rather than only from a mapper probe.
+# --------------------------------------------------------------------------
+
+def _attach_export_job(project_id: int, user_id: int) -> int:
+    """Insert an export_jobs row directly and return its id.
+
+    Deliberately not via `POST /projects/{id}/export`: that path runs the Celery
+    task, which needs its session factory patched (see
+    test_export_reliability.py's `_patch_task_session`) and writes a CSV. None of
+    that is under test here -- what is under test is what a DELETE does to an
+    existing `export_jobs` row, so the row is created directly.
+    """
+    db = TestingSessionLocal()
+    try:
+        job = ExportJob(project_id=project_id, requested_by_id=user_id)
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        return job.id
+    finally:
+        db.close()
+
+
+def test_deleting_a_project_that_has_an_export_job_succeeds(client, project_and_issue):
+    """D1-2's export half: `export_jobs.project_id` has no cascade, so deleting
+    a project that was ever exported must not 500.
+
+    Expected: 204, and the job row goes with the project. If the cascade is
+    missing the ORM tries to null out `project_id` (NOT NULL) and the request
+    fails as an IntegrityError -> 500, which is what this asserts against.
+    """
+    job_id = _attach_export_job(project_and_issue["project_id"], project_and_issue["owner_id"])
+
+    resp = client.delete(f"/projects/{project_and_issue['project_id']}",
+                         headers=project_and_issue["owner_headers"])
+    assert resp.status_code == 204, f"project delete with an export job attached -> {resp.status_code}"
+
+    db = TestingSessionLocal()
+    try:
+        assert db.get(ExportJob, job_id) is None, "export job outlived its project"
+    finally:
+        db.close()
+
+
+def test_admin_can_delete_a_user_who_requested_an_export(client, project_and_issue):
+    """D3-1's export half: `export_jobs.requested_by_id` has no cascade, so
+    deleting a user who ever exported a project must not 500.
+
+    This is the harder direction: the delete has to unwind user -> projects ->
+    issues -> notifications *and* user -> export_jobs in one transaction.
+    """
+    job_id = _attach_export_job(project_and_issue["project_id"], project_and_issue["owner_id"])
+
+    auth_headers(client, email="export-offboarding-admin@example.com")
+    _promote_to_admin("export-offboarding-admin@example.com")
+    admin = client.post("/auth/login", data={"username": "export-offboarding-admin@example.com",
+                                            "password": "password123"}).json()
+    resp = client.delete(f"/users/{project_and_issue['owner_id']}",
+                         headers={"Authorization": f"Bearer {admin['access_token']}"})
+    assert resp.status_code == 204, f"admin user delete with export job -> {resp.status_code}"
+
+    db = TestingSessionLocal()
+    try:
+        assert db.get(ExportJob, job_id) is None, "export job outlived its requester"
+    finally:
+        db.close()
+

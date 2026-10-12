@@ -171,8 +171,10 @@ request issues, by hooking SQLAlchemy's `before_cursor_execute`:
 
 ## 7. Suite and numbers quoted from this state
 
-* `pytest app/tests --cov=app` → **173 passed, 2 xfailed, 97% total** (1374 statements, 44 missed), ruff clean.
+* `pytest app/tests --cov=app` → **177 passed, 0 xfailed, 97% total** (1378 statements, 44 missed), ruff clean.
 * Coverage is measured over production code only — `.coveragerc` omits `app/tests/`, because
   the test modules live inside the package they measure (the long-quoted 94% was measured
   with the tests counting as covered code).
-* The two xfails are registered defects D1-2 and D3-1, not Day-7 work.
+* The two xfails that used to be listed here were registered defects D1-2 and D3-1; both are
+  fixed, their markers removed, and the same tests now assert real 204s. The export-job half
+  those tests did not reach is covered by two further regression tests in the same file.
